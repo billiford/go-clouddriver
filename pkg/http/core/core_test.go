@@ -9,6 +9,7 @@ import (
 	"net/http/httptest"
 
 	clouddriver "github.com/billiford/go-clouddriver/pkg"
+	kubefakes "github.com/billiford/go-clouddriver/pkg/http/core/kubernetes/kubernetesfakes"
 	"github.com/billiford/go-clouddriver/pkg/kubernetes"
 	"github.com/billiford/go-clouddriver/pkg/kubernetes/kubernetesfakes"
 	"github.com/billiford/go-clouddriver/pkg/server"
@@ -21,14 +22,16 @@ import (
 )
 
 var (
-	err            error
-	svr            *httptest.Server
-	uri            string
-	req            *http.Request
-	body           *bytes.Buffer
-	res            *http.Response
-	fakeSQLClient  *sqlfakes.FakeClient
-	fakeKubeClient *kubernetesfakes.FakeClient
+	err                   error
+	svr                   *httptest.Server
+	uri                   string
+	req                   *http.Request
+	body                  *bytes.Buffer
+	res                   *http.Response
+	fakeSQLClient         *sqlfakes.FakeClient
+	fakeKubeClient        *kubernetesfakes.FakeClient
+	fakeKubeActionHandler *kubefakes.FakeActionHandler
+	fakeAction            *kubefakes.FakeAction
 )
 
 func setup() {
@@ -39,7 +42,7 @@ func setup() {
 		Host:   "http://localhost",
 		CAData: "",
 	}, nil)
-	fakeSQLClient.ListKubernetesResourcesReturns([]kubernetes.Resource{
+	fakeSQLClient.ListKubernetesResourcesByTaskIDReturns([]kubernetes.Resource{
 		{
 			AccountName: "test-account-name",
 		},
@@ -47,6 +50,14 @@ func setup() {
 
 	fakeKubeClient = &kubernetesfakes.FakeClient{}
 	fakeKubeClient.GetReturns(&unstructured.Unstructured{Object: map[string]interface{}{}}, nil)
+
+	fakeAction = &kubefakes.FakeAction{}
+	fakeKubeActionHandler = &kubefakes.FakeActionHandler{}
+
+	fakeKubeActionHandler.NewDeployManifestActionReturns(fakeAction)
+	fakeKubeActionHandler.NewScaleManifestActionReturns(fakeAction)
+	fakeKubeActionHandler.NewRollingRestartActionReturns(fakeAction)
+	fakeKubeActionHandler.NewRollbackActionReturns(fakeAction)
 
 	// Disable debug logging.
 	gin.SetMode(gin.ReleaseMode)
@@ -57,8 +68,9 @@ func setup() {
 	r.Use(gin.Recovery())
 
 	c := &server.Config{
-		SQLClient:  fakeSQLClient,
-		KubeClient: fakeKubeClient,
+		SQLClient:         fakeSQLClient,
+		KubeClient:        fakeKubeClient,
+		KubeActionHandler: fakeKubeActionHandler,
 	}
 	// Create server.
 	server.Setup(r, c)

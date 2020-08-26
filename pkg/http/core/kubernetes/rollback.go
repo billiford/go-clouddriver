@@ -37,14 +37,13 @@ var (
 	errRevisionNotFound      = errors.New("revision not found")
 )
 
-func NewRollbackAction(sc sql.Client,
-	kc kubernetes.Client, id, application string, rb UndoRolloutManifestRequest) Action {
+func (ah *actionHandler) NewRollbackAction(ac ActionConfig) Action {
 	return &rollback{
-		sc:          sc,
-		kc:          kc,
-		id:          id,
-		application: application,
-		rb:          rb,
+		sc:          ac.SQLClient,
+		kc:          ac.KubeClient,
+		id:          ac.ID,
+		application: ac.Application,
+		rb:          ac.Operation.UndoRolloutManifest,
 	}
 }
 
@@ -52,7 +51,7 @@ type rollback struct {
 	sc          sql.Client
 	kc          kubernetes.Client
 	id          string
-	rb          UndoRolloutManifestRequest
+	rb          *UndoRolloutManifestRequest
 	application string
 }
 

@@ -10,13 +10,12 @@ import (
 	"k8s.io/client-go/rest"
 )
 
-func NewRollingRestartAction(sc sql.Client,
-	kc kubernetes.Client, id string, rr RollingRestartManifestRequest) Action {
+func (ah *actionHandler) NewRollingRestartAction(ac ActionConfig) Action {
 	return &rollingRestart{
-		sc: sc,
-		kc: kc,
-		id: id,
-		rr: rr,
+		sc: ac.SQLClient,
+		kc: ac.KubeClient,
+		id: ac.ID,
+		rr: ac.Operation.RollingRestartManifest,
 	}
 }
 
@@ -24,7 +23,7 @@ type rollingRestart struct {
 	sc sql.Client
 	kc kubernetes.Client
 	id string
-	rr RollingRestartManifestRequest
+	rr *RollingRestartManifestRequest
 }
 
 // Perform a `kubectl rollout restart` by setting an annotation on a pod template

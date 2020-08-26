@@ -9,13 +9,12 @@ import (
 	"k8s.io/client-go/rest"
 )
 
-func NewDeployManifestAction(sc sql.Client,
-	kc kubernetes.Client, id string, dm DeployManifestRequest) Action {
+func (ah *actionHandler) NewDeployManifestAction(ac ActionConfig) Action {
 	return &deployManfest{
-		sc: sc,
-		kc: kc,
-		id: id,
-		dm: dm,
+		sc: ac.SQLClient,
+		kc: ac.KubeClient,
+		id: ac.ID,
+		dm: ac.Operation.DeployManifest,
 	}
 }
 
@@ -23,7 +22,7 @@ type deployManfest struct {
 	sc sql.Client
 	kc kubernetes.Client
 	id string
-	dm DeployManifestRequest
+	dm *DeployManifestRequest
 }
 
 func (d *deployManfest) Run() error {

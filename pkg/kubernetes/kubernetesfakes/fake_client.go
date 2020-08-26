@@ -12,32 +12,34 @@ import (
 )
 
 type FakeClient struct {
-	WithConfigStub        func(*rest.Config) error
+	SetDynamicClientForConfigStub        func(*rest.Config) error
+	setDynamicClientForConfigMutex       sync.RWMutex
+	setDynamicClientForConfigArgsForCall []struct {
+		arg1 *rest.Config
+	}
+	setDynamicClientForConfigReturns struct {
+		result1 error
+	}
+	setDynamicClientForConfigReturnsOnCall map[int]struct {
+		result1 error
+	}
+	WithConfigStub        func(*rest.Config)
 	withConfigMutex       sync.RWMutex
 	withConfigArgsForCall []struct {
 		arg1 *rest.Config
 	}
-	withConfigReturns struct {
-		result1 error
-	}
-	withConfigReturnsOnCall map[int]struct {
-		result1 error
-	}
-	ApplyStub        func([]byte, string) (*unstructured.Unstructured, kubernetes.Metadata, error)
+	ApplyStub        func(*unstructured.Unstructured) (kubernetes.Metadata, error)
 	applyMutex       sync.RWMutex
 	applyArgsForCall []struct {
-		arg1 []byte
-		arg2 string
+		arg1 *unstructured.Unstructured
 	}
 	applyReturns struct {
-		result1 *unstructured.Unstructured
-		result2 kubernetes.Metadata
-		result3 error
+		result1 kubernetes.Metadata
+		result2 error
 	}
 	applyReturnsOnCall map[int]struct {
-		result1 *unstructured.Unstructured
-		result2 kubernetes.Metadata
-		result3 error
+		result1 kubernetes.Metadata
+		result2 error
 	}
 	GetStub        func(string, string, string) (*unstructured.Unstructured, error)
 	getMutex       sync.RWMutex
@@ -72,21 +74,64 @@ type FakeClient struct {
 	invocationsMutex sync.RWMutex
 }
 
-func (fake *FakeClient) WithConfig(arg1 *rest.Config) error {
+func (fake *FakeClient) SetDynamicClientForConfig(arg1 *rest.Config) error {
+	fake.setDynamicClientForConfigMutex.Lock()
+	ret, specificReturn := fake.setDynamicClientForConfigReturnsOnCall[len(fake.setDynamicClientForConfigArgsForCall)]
+	fake.setDynamicClientForConfigArgsForCall = append(fake.setDynamicClientForConfigArgsForCall, struct {
+		arg1 *rest.Config
+	}{arg1})
+	fake.recordInvocation("SetDynamicClientForConfig", []interface{}{arg1})
+	fake.setDynamicClientForConfigMutex.Unlock()
+	if fake.SetDynamicClientForConfigStub != nil {
+		return fake.SetDynamicClientForConfigStub(arg1)
+	}
+	if specificReturn {
+		return ret.result1
+	}
+	return fake.setDynamicClientForConfigReturns.result1
+}
+
+func (fake *FakeClient) SetDynamicClientForConfigCallCount() int {
+	fake.setDynamicClientForConfigMutex.RLock()
+	defer fake.setDynamicClientForConfigMutex.RUnlock()
+	return len(fake.setDynamicClientForConfigArgsForCall)
+}
+
+func (fake *FakeClient) SetDynamicClientForConfigArgsForCall(i int) *rest.Config {
+	fake.setDynamicClientForConfigMutex.RLock()
+	defer fake.setDynamicClientForConfigMutex.RUnlock()
+	return fake.setDynamicClientForConfigArgsForCall[i].arg1
+}
+
+func (fake *FakeClient) SetDynamicClientForConfigReturns(result1 error) {
+	fake.SetDynamicClientForConfigStub = nil
+	fake.setDynamicClientForConfigReturns = struct {
+		result1 error
+	}{result1}
+}
+
+func (fake *FakeClient) SetDynamicClientForConfigReturnsOnCall(i int, result1 error) {
+	fake.SetDynamicClientForConfigStub = nil
+	if fake.setDynamicClientForConfigReturnsOnCall == nil {
+		fake.setDynamicClientForConfigReturnsOnCall = make(map[int]struct {
+			result1 error
+		})
+	}
+	fake.setDynamicClientForConfigReturnsOnCall[i] = struct {
+		result1 error
+	}{result1}
+}
+
+func (fake *FakeClient) WithConfig(arg1 *rest.Config) {
 	fake.withConfigMutex.Lock()
-	ret, specificReturn := fake.withConfigReturnsOnCall[len(fake.withConfigArgsForCall)]
 	fake.withConfigArgsForCall = append(fake.withConfigArgsForCall, struct {
 		arg1 *rest.Config
 	}{arg1})
 	fake.recordInvocation("WithConfig", []interface{}{arg1})
 	fake.withConfigMutex.Unlock()
 	if fake.WithConfigStub != nil {
-		return fake.WithConfigStub(arg1)
+		fake.WithConfigStub(arg1)
 	}
-	if specificReturn {
-		return ret.result1
-	}
-	return fake.withConfigReturns.result1
 }
 
 func (fake *FakeClient) WithConfigCallCount() int {
@@ -101,46 +146,21 @@ func (fake *FakeClient) WithConfigArgsForCall(i int) *rest.Config {
 	return fake.withConfigArgsForCall[i].arg1
 }
 
-func (fake *FakeClient) WithConfigReturns(result1 error) {
-	fake.WithConfigStub = nil
-	fake.withConfigReturns = struct {
-		result1 error
-	}{result1}
-}
-
-func (fake *FakeClient) WithConfigReturnsOnCall(i int, result1 error) {
-	fake.WithConfigStub = nil
-	if fake.withConfigReturnsOnCall == nil {
-		fake.withConfigReturnsOnCall = make(map[int]struct {
-			result1 error
-		})
-	}
-	fake.withConfigReturnsOnCall[i] = struct {
-		result1 error
-	}{result1}
-}
-
-func (fake *FakeClient) Apply(arg1 []byte, arg2 string) (*unstructured.Unstructured, kubernetes.Metadata, error) {
-	var arg1Copy []byte
-	if arg1 != nil {
-		arg1Copy = make([]byte, len(arg1))
-		copy(arg1Copy, arg1)
-	}
+func (fake *FakeClient) Apply(arg1 *unstructured.Unstructured) (kubernetes.Metadata, error) {
 	fake.applyMutex.Lock()
 	ret, specificReturn := fake.applyReturnsOnCall[len(fake.applyArgsForCall)]
 	fake.applyArgsForCall = append(fake.applyArgsForCall, struct {
-		arg1 []byte
-		arg2 string
-	}{arg1Copy, arg2})
-	fake.recordInvocation("Apply", []interface{}{arg1Copy, arg2})
+		arg1 *unstructured.Unstructured
+	}{arg1})
+	fake.recordInvocation("Apply", []interface{}{arg1})
 	fake.applyMutex.Unlock()
 	if fake.ApplyStub != nil {
-		return fake.ApplyStub(arg1, arg2)
+		return fake.ApplyStub(arg1)
 	}
 	if specificReturn {
-		return ret.result1, ret.result2, ret.result3
+		return ret.result1, ret.result2
 	}
-	return fake.applyReturns.result1, fake.applyReturns.result2, fake.applyReturns.result3
+	return fake.applyReturns.result1, fake.applyReturns.result2
 }
 
 func (fake *FakeClient) ApplyCallCount() int {
@@ -149,35 +169,32 @@ func (fake *FakeClient) ApplyCallCount() int {
 	return len(fake.applyArgsForCall)
 }
 
-func (fake *FakeClient) ApplyArgsForCall(i int) ([]byte, string) {
+func (fake *FakeClient) ApplyArgsForCall(i int) *unstructured.Unstructured {
 	fake.applyMutex.RLock()
 	defer fake.applyMutex.RUnlock()
-	return fake.applyArgsForCall[i].arg1, fake.applyArgsForCall[i].arg2
+	return fake.applyArgsForCall[i].arg1
 }
 
-func (fake *FakeClient) ApplyReturns(result1 *unstructured.Unstructured, result2 kubernetes.Metadata, result3 error) {
+func (fake *FakeClient) ApplyReturns(result1 kubernetes.Metadata, result2 error) {
 	fake.ApplyStub = nil
 	fake.applyReturns = struct {
-		result1 *unstructured.Unstructured
-		result2 kubernetes.Metadata
-		result3 error
-	}{result1, result2, result3}
+		result1 kubernetes.Metadata
+		result2 error
+	}{result1, result2}
 }
 
-func (fake *FakeClient) ApplyReturnsOnCall(i int, result1 *unstructured.Unstructured, result2 kubernetes.Metadata, result3 error) {
+func (fake *FakeClient) ApplyReturnsOnCall(i int, result1 kubernetes.Metadata, result2 error) {
 	fake.ApplyStub = nil
 	if fake.applyReturnsOnCall == nil {
 		fake.applyReturnsOnCall = make(map[int]struct {
-			result1 *unstructured.Unstructured
-			result2 kubernetes.Metadata
-			result3 error
+			result1 kubernetes.Metadata
+			result2 error
 		})
 	}
 	fake.applyReturnsOnCall[i] = struct {
-		result1 *unstructured.Unstructured
-		result2 kubernetes.Metadata
-		result3 error
-	}{result1, result2, result3}
+		result1 kubernetes.Metadata
+		result2 error
+	}{result1, result2}
 }
 
 func (fake *FakeClient) Get(arg1 string, arg2 string, arg3 string) (*unstructured.Unstructured, error) {
@@ -288,6 +305,8 @@ func (fake *FakeClient) ListReturnsOnCall(i int, result1 *unstructured.Unstructu
 func (fake *FakeClient) Invocations() map[string][][]interface{} {
 	fake.invocationsMutex.RLock()
 	defer fake.invocationsMutex.RUnlock()
+	fake.setDynamicClientForConfigMutex.RLock()
+	defer fake.setDynamicClientForConfigMutex.RUnlock()
 	fake.withConfigMutex.RLock()
 	defer fake.withConfigMutex.RUnlock()
 	fake.applyMutex.RLock()

@@ -4,9 +4,198 @@ const payloadBadRequest = `{
             "error": "invalid character 'd' looking for beginning of value"
           }`
 
-const payloadRequestKubernetesOps = `[
+const payloadRequestKubernetesOpsDeployManifest = `[
   {
     "deployManifest": {
+      "enableTraffic": true,
+      "namespaceOverride": "default",
+      "optionalArtifacts": [],
+      "cloudProvider": "kubernetes",
+      "manifests": [
+        {
+          "metadata": {
+            "name": "rss-site",
+            "labels": {
+              "app": "web"
+            }
+          },
+          "apiVersion": "v1",
+          "kind": "Pod",
+          "spec": {
+            "containers": [
+              {
+                "image": "nginx",
+                "name": "front-end",
+                "ports": [
+                  {
+                    "containerPort": 80
+                  }
+                ]
+              },
+              {
+                "image": "nickchase/rss-php-nginx:vasdf1",
+                "name": "rss-reader",
+                "ports": [
+                  {
+                    "containerPort": 88
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "trafficManagement": {
+        "options": {
+          "enableTraffic": true,
+          "namespace": "default",
+          "services": [
+            "service hello-app-red-black"
+          ],
+          "strategy": "redblack"
+        },
+        "enabled": false
+      },
+      "moniker": {
+        "app": "test"
+      },
+      "source": "text",
+      "account": "spin-cluster-account",
+      "skipExpressionEvaluation": false,
+      "requiredArtifacts": []
+    }
+  }
+]`
+
+const payloadRequestKubernetesOpsScaleManifest = `[
+  {
+    "scaleManifest": {
+      "enableTraffic": true,
+      "namespaceOverride": "default",
+      "optionalArtifacts": [],
+      "cloudProvider": "kubernetes",
+      "manifests": [
+        {
+          "metadata": {
+            "name": "rss-site",
+            "labels": {
+              "app": "web"
+            }
+          },
+          "apiVersion": "v1",
+          "kind": "Pod",
+          "spec": {
+            "containers": [
+              {
+                "image": "nginx",
+                "name": "front-end",
+                "ports": [
+                  {
+                    "containerPort": 80
+                  }
+                ]
+              },
+              {
+                "image": "nickchase/rss-php-nginx:vasdf1",
+                "name": "rss-reader",
+                "ports": [
+                  {
+                    "containerPort": 88
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "trafficManagement": {
+        "options": {
+          "enableTraffic": true,
+          "namespace": "default",
+          "services": [
+            "service hello-app-red-black"
+          ],
+          "strategy": "redblack"
+        },
+        "enabled": false
+      },
+      "moniker": {
+        "app": "test"
+      },
+      "source": "text",
+      "account": "spin-cluster-account",
+      "skipExpressionEvaluation": false,
+      "requiredArtifacts": []
+    }
+  }
+]`
+
+const payloadRequestKubernetesOpsRollingRestartManifest = `[
+  {
+    "rollingRestartManifest": {
+      "enableTraffic": true,
+      "namespaceOverride": "default",
+      "optionalArtifacts": [],
+      "cloudProvider": "kubernetes",
+      "manifests": [
+        {
+          "metadata": {
+            "name": "rss-site",
+            "labels": {
+              "app": "web"
+            }
+          },
+          "apiVersion": "v1",
+          "kind": "Pod",
+          "spec": {
+            "containers": [
+              {
+                "image": "nginx",
+                "name": "front-end",
+                "ports": [
+                  {
+                    "containerPort": 80
+                  }
+                ]
+              },
+              {
+                "image": "nickchase/rss-php-nginx:vasdf1",
+                "name": "rss-reader",
+                "ports": [
+                  {
+                    "containerPort": 88
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "trafficManagement": {
+        "options": {
+          "enableTraffic": true,
+          "namespace": "default",
+          "services": [
+            "service hello-app-red-black"
+          ],
+          "strategy": "redblack"
+        },
+        "enabled": false
+      },
+      "moniker": {
+        "app": "test"
+      },
+      "source": "text",
+      "account": "spin-cluster-account",
+      "skipExpressionEvaluation": false,
+      "requiredArtifacts": []
+    }
+  }
+]`
+
+const payloadRequestKubernetesOpsUndoRolloutManifest = `[
+  {
+    "undoRolloutManifest": {
       "enableTraffic": true,
       "namespaceOverride": "default",
       "optionalArtifacts": [],

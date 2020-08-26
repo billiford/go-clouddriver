@@ -10,13 +10,12 @@ import (
 	"k8s.io/client-go/rest"
 )
 
-func NewScaleManifestAction(sc sql.Client,
-	kc kubernetes.Client, id string, sm ScaleManifestRequest) Action {
+func (ah *actionHandler) NewScaleManifestAction(ac ActionConfig) Action {
 	return &scaleManifest{
-		sc: sc,
-		kc: kc,
-		id: id,
-		sm: sm,
+		sc: ac.SQLClient,
+		kc: ac.KubeClient,
+		id: ac.ID,
+		sm: ac.Operation.ScaleManifest,
 	}
 }
 
@@ -24,7 +23,7 @@ type scaleManifest struct {
 	sc sql.Client
 	kc kubernetes.Client
 	id string
-	sm ScaleManifestRequest
+	sm *ScaleManifestRequest
 }
 
 func (s *scaleManifest) Run() error {

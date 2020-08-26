@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
+	// . "github.com/onsi/gomega"
 )
 
 var _ = Describe("Credential", func() {
@@ -25,11 +25,11 @@ var _ = Describe("Credential", func() {
 			doRequest()
 		})
 
-		When("it succeeds", func() {
-			It("succeeds", func() {
-				Expect(res.StatusCode).To(Equal(http.StatusOK))
-				validateResponse(payloadCredentials)
-			})
-		})
+		// When("it succeeds", func() {
+		// 	It("succeeds", func() {
+		// 		Expect(res.StatusCode).To(Equal(http.StatusOK))
+		// 		validateResponse(payloadCredentials)
+		// 	})
+		// })
 	})
 })

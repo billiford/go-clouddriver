@@ -7,7 +7,9 @@ type OperationsResponse struct {
 	ResourceURI string `json:"resourceUri"`
 }
 
-type Operations []struct {
+type Operations []Operation
+
+type Operation struct {
 	DeployManifest         *DeployManifestRequest         `json:"deployManifest"`
 	ScaleManifest          *ScaleManifestRequest          `json:"scaleManifest"`
 	CleanupArtifacts       *CleanupArtifactsRequest       `json:"cleanupArtifacts"`

@@ -1,8 +1,6 @@
 package core_test
 
 import (
-	// . "github.com/billiford/go-clouddriver/pkg/http/v0"
-
 	"errors"
 	"net/http"
 
@@ -11,11 +9,11 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-var _ = Describe("Task", func() {
-	Describe("#GetTask", func() {
+var _ = Describe("Manifest", func() {
+	Describe("#GetManifest", func() {
 		BeforeEach(func() {
 			setup()
-			uri = svr.URL + "/task/task-id"
+			uri = svr.URL + "/manifests/test-account/test-namespace/pod test-pod"
 			createRequest(http.MethodGet)
 		})
 
@@ -26,34 +24,6 @@ var _ = Describe("Task", func() {
 		JustBeforeEach(func() {
 			doRequest()
 		})
-
-		When("listing the resources returns an error", func() {
-			BeforeEach(func() {
-				fakeSQLClient.ListKubernetesResourcesByTaskIDReturns(nil, errors.New("error listing resources"))
-			})
-
-			It("returns status internal server error", func() {
-				Expect(res.StatusCode).To(Equal(http.StatusBadRequest))
-				ce := getClouddriverError()
-				Expect(ce.Error).To(Equal("Bad Request"))
-				Expect(ce.Message).To(Equal("error listing resources"))
-				Expect(ce.Status).To(Equal(http.StatusBadRequest))
-			})
-		})
-
-		// When("setting the kube config returns an error", func() {
-		// 	BeforeEach(func() {
-		// 		fakeKubeClient.WithConfigReturns(errors.New("bad config"))
-		// 	})
-		//
-		// 	It("returns status internal server error", func() {
-		// 		Expect(res.StatusCode).To(Equal(http.StatusInternalServerError))
-		// 		ce := getClouddriverError()
-		// 		Expect(ce.Error).To(Equal("Internal Server Error"))
-		// 		Expect(ce.Message).To(Equal("bad config"))
-		// 		Expect(ce.Status).To(Equal(http.StatusInternalServerError))
-		// 	})
-		// })
 
 		When("getting the provider returns an error", func() {
 			BeforeEach(func() {
@@ -85,16 +55,30 @@ var _ = Describe("Task", func() {
 			})
 		})
 
+		// When("setting the kube config returns an error", func() {
+		// 	BeforeEach(func() {
+		// 		fakeKubeClient.WithConfigReturns(errors.New("bad config"))
+		// 	})
+		//
+		// 	It("returns status internal server error", func() {
+		// 		Expect(res.StatusCode).To(Equal(http.StatusInternalServerError))
+		// 		ce := getClouddriverError()
+		// 		Expect(ce.Error).To(Equal("Internal Server Error"))
+		// 		Expect(ce.Message).To(Equal("bad config"))
+		// 		Expect(ce.Status).To(Equal(http.StatusInternalServerError))
+		// 	})
+		// })
+
 		When("getting the manifest returns an error", func() {
 			BeforeEach(func() {
-				fakeKubeClient.GetReturns(nil, errors.New("error getting resource"))
+				fakeKubeClient.GetReturns(nil, errors.New("error getting manifest"))
 			})
 
 			It("returns status internal server error", func() {
 				Expect(res.StatusCode).To(Equal(http.StatusInternalServerError))
 				ce := getClouddriverError()
 				Expect(ce.Error).To(Equal("Internal Server Error"))
-				Expect(ce.Message).To(Equal("error getting resource"))
+				Expect(ce.Message).To(Equal("error getting manifest"))
 				Expect(ce.Status).To(Equal(http.StatusInternalServerError))
 			})
 		})
