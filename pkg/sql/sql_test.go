@@ -69,8 +69,9 @@ var _ = Describe("Sql", func() {
 				mock.ExpectExec(`(?i)^INSERT INTO "kubernetes_providers" \(` +
 					`"name",` +
 					`"host",` +
-					`"ca_data"` +
-					`\) VALUES \(\?,\?,\?\)$`).
+					`"ca_data",` +
+					`"bearer_token"` +
+					`\) VALUES \(\?,\?,\?,\?\)$`).
 					WillReturnResult(sqlmock.NewResult(1, 1))
 				mock.ExpectCommit()
 			})
@@ -96,7 +97,7 @@ var _ = Describe("Sql", func() {
 			BeforeEach(func() {
 				sqlRows := sqlmock.NewRows([]string{"name", "host", "ca_data"}).
 					AddRow("test-name", "test-host", "test-ca-data")
-				mock.ExpectQuery(`(?i)^SELECT host, ca_data FROM "kubernetes_providers" ` +
+				mock.ExpectQuery(`(?i)^SELECT host, ca_data, bearer_token FROM "kubernetes_providers" ` +
 					` WHERE \(name = \?\) ORDER BY "kubernetes_providers"."name" ASC LIMIT 1$`).
 					WillReturnRows(sqlRows)
 				mock.ExpectCommit()
@@ -155,11 +156,11 @@ var _ = Describe("Sql", func() {
 		})
 	})
 
-	Describe("#ListKubernetesResources", func() {
+	Describe("#ListKubernetesResourcesByTaskID", func() {
 		var resources []kubernetes.Resource
 
 		JustBeforeEach(func() {
-			resources, err = c.ListKubernetesResources("test-task-id")
+			resources, err = c.ListKubernetesResourcesByTaskID("test-task-id")
 		})
 
 		When("it succeeds", func() {

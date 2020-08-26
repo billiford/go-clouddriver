@@ -58,7 +58,6 @@ func GetManifest(c *gin.Context) {
 
 	result, err := kc.Get(kind, name, namespace)
 	if err != nil {
-		fmt.Println("ERROR:", err.Error())
 		clouddriver.WriteError(c, http.StatusInternalServerError, err)
 		return
 	}
