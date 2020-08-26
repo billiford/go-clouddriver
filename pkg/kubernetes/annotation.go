@@ -2,7 +2,6 @@ package kubernetes
 
 import (
 	"fmt"
-	"log"
 	"strings"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -34,7 +33,6 @@ func AddSpinnakerAnnotations(u *unstructured.Unstructured, application string) e
 	annotate(u, AnnotationSpinnakerMonikerApplication, application)
 	annotate(u, AnnotationSpinnakerMonikerCluster, cluster)
 
-	log.Println("ANNOTATING KIND:", gvk.Kind)
 	if strings.EqualFold(gvk.Kind, "deployment") {
 		d := NewDeployment(u.Object)
 

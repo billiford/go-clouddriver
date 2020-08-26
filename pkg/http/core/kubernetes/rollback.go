@@ -118,8 +118,7 @@ func (r *rollback) Run() error {
 
 			if strings.EqualFold(name, manifestName) &&
 				strings.EqualFold(t, "kubernetes/"+manifestKind) {
-				replicaSetAnnotations := replicaSet.GetAnnotations()
-				sequence := replicaSetAnnotations["deployment.kubernetes.io/revision"]
+				sequence := annotations["deployment.kubernetes.io/revision"]
 
 				if sequence != "" && sequence == r.rb.Revision {
 					targetRS = &replicaSets.Items[i]
