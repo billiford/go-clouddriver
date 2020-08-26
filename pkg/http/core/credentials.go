@@ -16,7 +16,9 @@ import (
 	"k8s.io/client-go/rest"
 )
 
-// I'm not sure why spinnaker needs this, but without it several necessary Spinnaker manifest stages are missing.
+// I'm not sure why spinnaker needs this, but without it several necessary Spinnaker manifest stages are missing
+// (I suppose this is *why* Spinnaker needs it!).
+//
 // Also, All accounts with this have the same kind map, so we're hardcoding it for now.
 var spinnakerKindMap = map[string]string{
 	"apiService":                     "unclassified",
@@ -96,10 +98,7 @@ func ListCredentials(c *gin.Context) {
 			ProviderVersion:         "v2",
 			RequiredGroupMembership: []interface{}{},
 			Skin:                    "v2",
-			// SpinnakerKindMap: map[string]string{
-			// 	"": "",
-			// },
-			Type: "kubernetes",
+			Type:                    "kubernetes",
 		}
 
 		if expand == "true" {
@@ -123,7 +122,7 @@ func ListCredentials(c *gin.Context) {
 		accountNamespacesCh := make(chan AccountNamespaces, len(providers))
 		wg.Add(len(providers))
 
-		// Get all namespaces of allowed accounts asynchronysly.
+		// Get all namespaces of allowed accounts asynchronously.
 		for _, provider := range providers {
 			go func(account string) {
 				defer wg.Done()

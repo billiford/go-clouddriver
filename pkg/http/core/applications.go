@@ -228,36 +228,29 @@ func ListServerGroupManagers(c *gin.Context) {
 			for _, replicaSet := range replicaSets.Items {
 				annotations := replicaSet.GetAnnotations()
 				if annotations != nil {
-					var name, t string
-					if _, ok := annotations["artifact.spinnaker.io/name"]; ok {
-						name = annotations["artifact.spinnaker.io/name"]
-					}
-					if _, ok := annotations["artifact.spinnaker.io/type"]; ok {
-						t = annotations["artifact.spinnaker.io/type"]
-					}
-					if name != "" && t != "" {
-						if strings.EqualFold(name, deployment.GetName()) &&
-							strings.EqualFold(t, "kubernetes/deployment") {
-							sequence := 0
-							replicaSetAnnotations := replicaSet.GetAnnotations()
-							if replicaSetAnnotations != nil {
-								if _, ok := replicaSetAnnotations["deployment.kubernetes.io/revision"]; ok {
-									sequence, _ = strconv.Atoi(replicaSetAnnotations["deployment.kubernetes.io/revision"])
-								}
-							}
-							s := ServerGroupManagerServerGroup{
-								Account: account,
-								Moniker: ServerGroupManagerServerGroupMoniker{
-									App:      application,
-									Cluster:  fmt.Sprintf("%s %s", deploymentGVK.Kind, deployment.GetName()),
-									Sequence: sequence,
-								},
-								Name:      fmt.Sprintf("%s %s", "replicaset", replicaSet.GetName()),
-								Namespace: replicaSet.GetNamespace(),
-								Region:    replicaSet.GetNamespace(),
-							}
-							sgs = append(sgs, s)
+					name := annotations["artifact.spinnaker.io/name"]
+					t := annotations["artifact.spinnaker.io/type"]
+					if strings.EqualFold(name, deployment.GetName()) &&
+						strings.EqualFold(t, "kubernetes/deployment") {
+						sequence := 0
+
+						replicaSetAnnotations := replicaSet.GetAnnotations()
+						if replicaSetAnnotations != nil {
+							sequence, _ = strconv.Atoi(replicaSetAnnotations["deployment.kubernetes.io/revision"])
 						}
+
+						s := ServerGroupManagerServerGroup{
+							Account: account,
+							Moniker: ServerGroupManagerServerGroupMoniker{
+								App:      application,
+								Cluster:  fmt.Sprintf("%s %s", deploymentGVK.Kind, deployment.GetName()),
+								Sequence: sequence,
+							},
+							Name:      fmt.Sprintf("%s %s", "replicaset", replicaSet.GetName()),
+							Namespace: replicaSet.GetNamespace(),
+							Region:    replicaSet.GetNamespace(),
+						}
+						sgs = append(sgs, s)
 					}
 				}
 			}
@@ -704,16 +697,9 @@ func ListServerGroups(c *gin.Context) {
 			{
 				annotations := replicaSet.GetAnnotations()
 				if annotations != nil {
-					var managerName, managerLocation, managerType string
-					if _, ok := annotations["artifact.spinnaker.io/name"]; ok {
-						managerName = annotations["artifact.spinnaker.io/name"]
-					}
-					if _, ok := annotations["artifact.spinnaker.io/location"]; ok {
-						managerLocation = annotations["artifact.spinnaker.io/location"]
-					}
-					if _, ok := annotations["artifact.spinnaker.io/type"]; ok {
-						managerType = annotations["artifact.spinnaker.io/type"]
-					}
+					managerName := annotations["artifact.spinnaker.io/name"]
+					managerLocation := annotations["artifact.spinnaker.io/location"]
+					managerType := annotations["artifact.spinnaker.io/type"]
 					if managerType == "kubernetes/deployment" {
 						sgm := ServerGroupServerGroupManager{
 							Account:  account,
@@ -726,18 +712,9 @@ func ListServerGroups(c *gin.Context) {
 			}
 
 			annotations := replicaSet.GetAnnotations()
-			cluster := ""
-			app := application
-			sequence := 0
-			if _, ok := annotations["moniker.spinnaker.io/cluster"]; ok {
-				cluster = annotations["moniker.spinnaker.io/cluster"]
-			}
-			if _, ok := annotations["moniker.spinnaker.io/application"]; ok {
-				app = annotations["moniker.spinnaker.io/application"]
-			}
-			if _, ok := annotations["deployment.kubernetes.io/revision"]; ok {
-				sequence, _ = strconv.Atoi(annotations["deployment.kubernetes.io/revision"])
-			}
+			cluster := annotations["moniker.spinnaker.io/cluster"]
+			app := annotations["moniker.spinnaker.io/application"]
+			sequence, _ := strconv.Atoi(annotations["deployment.kubernetes.io/revision"])
 
 			sgs := ServerGroup{
 				Account: account,
@@ -893,15 +870,15 @@ func GetServerGroup(c *gin.Context) {
 				if p.GetPodStatus().Phase != "Running" {
 					state = "Down"
 				}
+
 				annotations := p.GetObjectMeta().Annotations
-				cluster := ""
-				app := application
-				if _, ok := annotations["moniker.spinnaker.io/cluster"]; ok {
-					cluster = annotations["moniker.spinnaker.io/cluster"]
+				cluster := annotations["moniker.spinnaker.io/cluster"]
+				app := annotations["moniker.spinnaker.io/application"]
+
+				if app == "" {
+					app = application
 				}
-				if _, ok := annotations["moniker.spinnaker.io/application"]; ok {
-					app = annotations["moniker.spinnaker.io/application"]
-				}
+
 				instance := Instance{
 					Account:          account,
 					AccountName:      account,
@@ -949,17 +926,12 @@ func GetServerGroup(c *gin.Context) {
 	}
 
 	annotations := result.GetAnnotations()
-	cluster := ""
-	app := application
-	sequence := 0
-	if _, ok := annotations["moniker.spinnaker.io/cluster"]; ok {
-		cluster = annotations["moniker.spinnaker.io/cluster"]
-	}
-	if _, ok := annotations["moniker.spinnaker.io/application"]; ok {
-		app = annotations["moniker.spinnaker.io/application"]
-	}
-	if _, ok := annotations["deployment.kubernetes.io/revision"]; ok {
-		sequence, _ = strconv.Atoi(annotations["deployment.kubernetes.io/revision"])
+	cluster := annotations["moniker.spinnaker.io/cluster"]
+	app := annotations["moniker.spinnaker.io/application"]
+	sequence, _ := strconv.Atoi(annotations["deployment.kubernetes.io/revision"])
+
+	if app == "" {
+		app = application
 	}
 
 	response := GetServerGroupResponse{

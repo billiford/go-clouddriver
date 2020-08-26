@@ -7,17 +7,30 @@ import (
 
 	"github.com/billiford/go-clouddriver/pkg/kubernetes"
 	"github.com/billiford/go-clouddriver/pkg/sql"
-	"github.com/gin-gonic/gin"
 	"k8s.io/client-go/rest"
 )
 
+func NewRollingRestartAction(sc sql.Client,
+	kc kubernetes.Client, id string, rr RollingRestartManifestRequest) Action {
+	return &rollingRestart{
+		sc: sc,
+		kc: kc,
+		id: id,
+		rr: rr,
+	}
+}
+
+type rollingRestart struct {
+	sc sql.Client
+	kc kubernetes.Client
+	id string
+	rr RollingRestartManifestRequest
+}
+
 // Perform a `kubectl rollout restart` by setting an annotation on a pod template
 // to the current time in RFC3339.
-func RollingRestartManifest(c *gin.Context, rrm RollingRestartManifestRequest) error {
-	sc := sql.Instance(c)
-	kc := kubernetes.Instance(c)
-
-	provider, err := sc.GetKubernetesProvider(rrm.Account)
+func (rr *rollingRestart) Run() error {
+	provider, err := rr.sc.GetKubernetesProvider(rr.rr.Account)
 	if err != nil {
 		return err
 	}
@@ -35,15 +48,15 @@ func RollingRestartManifest(c *gin.Context, rrm RollingRestartManifestRequest) e
 		},
 	}
 
-	if err = kc.SetDynamicClientForConfig(config); err != nil {
+	if err = rr.kc.SetDynamicClientForConfig(config); err != nil {
 		return err
 	}
 
-	a := strings.Split(rrm.ManifestName, " ")
+	a := strings.Split(rr.rr.ManifestName, " ")
 	kind := a[0]
 	name := a[1]
 
-	u, err := kc.Get(kind, name, rrm.Location)
+	u, err := rr.kc.Get(kind, name, rr.rr.Location)
 	if err != nil {
 		return err
 	}
@@ -62,7 +75,7 @@ func RollingRestartManifest(c *gin.Context, rrm RollingRestartManifestRequest) e
 			return err
 		}
 
-		_, err = kc.Apply(&annotatedObject)
+		_, err = rr.kc.Apply(&annotatedObject)
 		if err != nil {
 			return err
 		}

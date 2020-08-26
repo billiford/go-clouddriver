@@ -31,7 +31,6 @@ func init() {
 	// Ignore logging of certain endpoints.
 	r.Use(gin.LoggerWithConfig(gin.LoggerConfig{SkipPaths: []string{
 		"/health",
-		// "/applications", // TODO
 	}}))
 	r.Use(gin.Recovery())
 
@@ -43,21 +42,13 @@ func init() {
 	})
 
 	kubeClient := kubernetes.NewClient()
-
 	sqlClient := sql.NewClient(mustDBConnect())
+
 	c := &server.Config{
 		SQLClient:  sqlClient,
 		KubeClient: kubeClient,
 	}
 	server.Setup(r, c)
-}
-
-func mustGetenv(env string) (s string) {
-	if s = os.Getenv(env); s == "" {
-		log.Fatal(env + " not set; exiting.")
-	}
-
-	return
 }
 
 func mustDBConnect() *gorm.DB {
@@ -74,4 +65,12 @@ func mustDBConnect() *gorm.DB {
 	}
 
 	return db
+}
+
+func mustGetenv(env string) (s string) {
+	if s = os.Getenv(env); s == "" {
+		log.Fatal(env + " not set; exiting.")
+	}
+
+	return
 }

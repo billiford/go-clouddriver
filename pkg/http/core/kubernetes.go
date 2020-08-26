@@ -6,6 +6,8 @@ import (
 
 	clouddriver "github.com/billiford/go-clouddriver/pkg"
 	"github.com/billiford/go-clouddriver/pkg/http/core/kubernetes"
+	kube "github.com/billiford/go-clouddriver/pkg/kubernetes"
+	"github.com/billiford/go-clouddriver/pkg/sql"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
@@ -48,7 +50,13 @@ func CreateKubernetesOperation(c *gin.Context) {
 	// each requested action.
 	for _, req := range ko {
 		if req.DeployManifest != nil {
-			err = kubernetes.DeployManifests(c, taskID, *req.DeployManifest)
+			action := kubernetes.NewDeployManifestAction(
+				sql.Instance(c),
+				kube.Instance(c),
+				taskID,
+				*req.DeployManifest,
+			)
+			err = action.Run()
 			if err != nil {
 				clouddriver.WriteError(c, http.StatusInternalServerError, err)
 				return
@@ -56,7 +64,13 @@ func CreateKubernetesOperation(c *gin.Context) {
 		}
 
 		if req.ScaleManifest != nil {
-			err = kubernetes.ScaleManifest(c, *req.ScaleManifest)
+			action := kubernetes.NewScaleManifestAction(
+				sql.Instance(c),
+				kube.Instance(c),
+				taskID,
+				*req.ScaleManifest,
+			)
+			err = action.Run()
 			if err != nil {
 				clouddriver.WriteError(c, http.StatusInternalServerError, err)
 				return
@@ -64,11 +78,17 @@ func CreateKubernetesOperation(c *gin.Context) {
 		}
 
 		if req.CleanupArtifacts != nil {
-			log.Println("got request to cleanup artifacts - unimplemented, returning status OK")
+			log.Println("got request to cleanup artifacts - unimplemented")
 		}
 
 		if req.RollingRestartManifest != nil {
-			err = kubernetes.RollingRestartManifest(c, *req.RollingRestartManifest)
+			action := kubernetes.NewRollingRestartAction(
+				sql.Instance(c),
+				kube.Instance(c),
+				taskID,
+				*req.RollingRestartManifest,
+			)
+			err = action.Run()
 			if err != nil {
 				clouddriver.WriteError(c, http.StatusInternalServerError, err)
 				return
@@ -76,7 +96,14 @@ func CreateKubernetesOperation(c *gin.Context) {
 		}
 
 		if req.UndoRolloutManifest != nil {
-			err = kubernetes.UndoRolloutManifest(c, *req.UndoRolloutManifest)
+			action := kubernetes.NewRollbackAction(
+				sql.Instance(c),
+				kube.Instance(c),
+				taskID,
+				c.GetHeader("X-Spinnaker-Application"),
+				*req.UndoRolloutManifest,
+			)
+			err = action.Run()
 			if err != nil {
 				clouddriver.WriteError(c, http.StatusInternalServerError, err)
 				return

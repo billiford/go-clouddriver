@@ -11,6 +11,7 @@ import (
 func GetStatus(kind string, m map[string]interface{}) manifest.Status {
 	status := manifest.DefaultStatus
 
+	// TODO need to fill in statuses for all kinds here.
 	switch strings.ToLower(kind) {
 	case "deployment":
 		status = NewDeployment(m).Status()

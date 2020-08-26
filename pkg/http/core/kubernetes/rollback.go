@@ -7,7 +7,6 @@ import (
 
 	"github.com/billiford/go-clouddriver/pkg/kubernetes"
 	"github.com/billiford/go-clouddriver/pkg/sql"
-	"github.com/gin-gonic/gin"
 
 	apps "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
@@ -38,19 +37,35 @@ var (
 	errRevisionNotFound      = errors.New("revision not found")
 )
 
-func UndoRolloutManifest(c *gin.Context, urm UndoRolloutManifestRequest) error {
-	sc := sql.Instance(c)
-	kc := kubernetes.Instance(c)
-	application := c.GetHeader("X-Spinnaker-Application")
-	a := strings.Split(urm.ManifestName, " ")
+func NewRollbackAction(sc sql.Client,
+	kc kubernetes.Client, id, application string, rb UndoRolloutManifestRequest) Action {
+	return &rollback{
+		sc:          sc,
+		kc:          kc,
+		id:          id,
+		application: application,
+		rb:          rb,
+	}
+}
+
+type rollback struct {
+	sc          sql.Client
+	kc          kubernetes.Client
+	id          string
+	rb          UndoRolloutManifestRequest
+	application string
+}
+
+func (r *rollback) Run() error {
+	a := strings.Split(r.rb.ManifestName, " ")
 	manifestKind := a[0]
 	manifestName := a[1]
 
-	if application == "" {
+	if r.application == "" {
 		return errNoApplicationProvided
 	}
 
-	provider, err := sc.GetKubernetesProvider(urm.Account)
+	provider, err := r.sc.GetKubernetesProvider(r.rb.Account)
 	if err != nil {
 		return err
 	}
@@ -68,9 +83,12 @@ func UndoRolloutManifest(c *gin.Context, urm UndoRolloutManifestRequest) error {
 		},
 	}
 
-	kc.SetDynamicClientForConfig(config)
+	err = r.kc.SetDynamicClientForConfig(config)
+	if err != nil {
+		return err
+	}
 
-	d, err := kc.Get(manifestKind, manifestName, urm.Location)
+	d, err := r.kc.Get(manifestKind, manifestName, r.rb.Location)
 	if err != nil {
 		return err
 	}
@@ -80,11 +98,12 @@ func UndoRolloutManifest(c *gin.Context, urm UndoRolloutManifestRequest) error {
 		Version:  "v1",
 		Resource: "replicasets",
 	}
+	// TODO we might need to set this to just be 'spinnaker-managed'.
 	lo := metav1.ListOptions{
-		LabelSelector: kubernetes.LabelKubernetesSpinnakerApp + "=" + application,
+		LabelSelector: kubernetes.LabelKubernetesSpinnakerApp + "=" + r.application,
 	}
 
-	replicaSets, err := kc.List(replicaSetGVR, lo)
+	replicaSets, err := r.kc.List(replicaSetGVR, lo)
 	if err != nil {
 		return err
 	}
@@ -92,30 +111,31 @@ func UndoRolloutManifest(c *gin.Context, urm UndoRolloutManifestRequest) error {
 	var targetRS *unstructured.Unstructured
 
 	// Deployments manage replicasets, so build a list of managed replicasets for each deployment.
-	for _, replicaSet := range replicaSets.Items {
+	for i, replicaSet := range replicaSets.Items {
 		annotations := replicaSet.GetAnnotations()
 		if annotations != nil {
 			name := annotations[kubernetes.AnnotationSpinnakerArtifactName]
 			t := annotations[kubernetes.AnnotationSpinnakerArtifactType]
-			if name != "" && t != "" &&
-				strings.EqualFold(name, manifestName) &&
+
+			if strings.EqualFold(name, manifestName) &&
 				strings.EqualFold(t, "kubernetes/"+manifestKind) {
 				replicaSetAnnotations := replicaSet.GetAnnotations()
 				sequence := replicaSetAnnotations["deployment.kubernetes.io/revision"]
-				if sequence != "" && sequence == urm.Revision {
-					targetRS = &replicaSet
+
+				if sequence != "" && sequence == r.rb.Revision {
+					targetRS = &replicaSets.Items[i]
 					break
 				}
 			}
 		}
 	}
 
-	deployment := kubernetes.NewDeployment(d.Object)
-	rs := kubernetes.NewReplicaSet(targetRS.Object).Object()
-
-	if rs == nil {
+	if targetRS == nil {
 		return errRevisionNotFound
 	}
+
+	deployment := kubernetes.NewDeployment(d.Object)
+	rs := kubernetes.NewReplicaSet(targetRS.Object).Object()
 
 	SetFromReplicaSetTemplate(deployment.Object(), rs.Spec.Template)
 	// set RS (the old RS we'll rolling back to) annotations back to the deployment;
@@ -141,7 +161,7 @@ func UndoRolloutManifest(c *gin.Context, urm UndoRolloutManifestRequest) error {
 		return err
 	}
 
-	_, err = kc.Apply(&u)
+	_, err = r.kc.Apply(&u)
 	if err != nil {
 		return err
 	}

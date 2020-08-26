@@ -5,16 +5,29 @@ import (
 
 	"github.com/billiford/go-clouddriver/pkg/kubernetes"
 	"github.com/billiford/go-clouddriver/pkg/sql"
-	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"k8s.io/client-go/rest"
 )
 
-func DeployManifests(c *gin.Context, taskID string, dm DeployManifestRequest) error {
-	sc := sql.Instance(c)
-	kc := kubernetes.Instance(c)
+func NewDeployManifestAction(sc sql.Client,
+	kc kubernetes.Client, id string, dm DeployManifestRequest) Action {
+	return &deployManfest{
+		sc: sc,
+		kc: kc,
+		id: id,
+		dm: dm,
+	}
+}
 
-	provider, err := sc.GetKubernetesProvider(dm.Account)
+type deployManfest struct {
+	sc sql.Client
+	kc kubernetes.Client
+	id string
+	dm DeployManifestRequest
+}
+
+func (d *deployManfest) Run() error {
+	provider, err := d.sc.GetKubernetesProvider(d.dm.Account)
 	if err != nil {
 		return err
 	}
@@ -32,43 +45,43 @@ func DeployManifests(c *gin.Context, taskID string, dm DeployManifestRequest) er
 		},
 	}
 
-	kc.WithConfig(config)
+	d.kc.WithConfig(config)
 
-	for _, manifest := range dm.Manifests {
+	for _, manifest := range d.dm.Manifests {
 		u, err := kubernetes.ToUnstructured(manifest)
 		if err != nil {
 			return err
 		}
 
-		err = kubernetes.AddSpinnakerAnnotations(u, dm.Moniker.App)
+		err = kubernetes.AddSpinnakerAnnotations(u, d.dm.Moniker.App)
 		if err != nil {
 			return err
 		}
 
-		err = kubernetes.AddSpinnakerLabels(u, dm.Moniker.App)
+		err = kubernetes.AddSpinnakerLabels(u, d.dm.Moniker.App)
 		if err != nil {
 			return err
 		}
 
-		meta, err := kc.Apply(u)
+		meta, err := d.kc.Apply(u)
 		if err != nil {
 			return err
 		}
 
 		kr := kubernetes.Resource{
-			AccountName:  dm.Account,
+			AccountName:  d.dm.Account,
 			ID:           uuid.New().String(),
-			TaskID:       taskID,
+			TaskID:       d.id,
 			APIGroup:     meta.Group,
 			Name:         meta.Name,
 			Namespace:    meta.Namespace,
 			Resource:     meta.Resource,
 			Version:      meta.Version,
 			Kind:         meta.Kind,
-			SpinnakerApp: dm.Moniker.App,
+			SpinnakerApp: d.dm.Moniker.App,
 		}
 
-		err = sc.CreateKubernetesResource(kr)
+		err = d.sc.CreateKubernetesResource(kr)
 		if err != nil {
 			return err
 		}

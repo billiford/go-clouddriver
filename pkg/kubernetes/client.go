@@ -210,6 +210,8 @@ func (c *client) List(gvr schema.GroupVersionResource, lo metav1.ListOptions) (*
 	return c.c.Resource(gvr).List(context.TODO(), lo)
 }
 
+// TODO we should only set up the rest mapper *once* for each client.
+//
 // Find the corresponding GVR (available in *meta.RESTMapping) for gvk.
 func findGVR(gvk *schema.GroupVersionKind, cfg *rest.Config) (*meta.RESTMapping, error) {
 	// DiscoveryClient queries API server about the resources

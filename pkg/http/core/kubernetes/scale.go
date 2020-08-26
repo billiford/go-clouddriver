@@ -7,15 +7,28 @@ import (
 
 	"github.com/billiford/go-clouddriver/pkg/kubernetes"
 	"github.com/billiford/go-clouddriver/pkg/sql"
-	"github.com/gin-gonic/gin"
 	"k8s.io/client-go/rest"
 )
 
-func ScaleManifest(c *gin.Context, sm ScaleManifestRequest) error {
-	sc := sql.Instance(c)
-	kc := kubernetes.Instance(c)
+func NewScaleManifestAction(sc sql.Client,
+	kc kubernetes.Client, id string, sm ScaleManifestRequest) Action {
+	return &scaleManifest{
+		sc: sc,
+		kc: kc,
+		id: id,
+		sm: sm,
+	}
+}
 
-	provider, err := sc.GetKubernetesProvider(sm.Account)
+type scaleManifest struct {
+	sc sql.Client
+	kc kubernetes.Client
+	id string
+	sm ScaleManifestRequest
+}
+
+func (s *scaleManifest) Run() error {
+	provider, err := s.sc.GetKubernetesProvider(s.sm.Account)
 	if err != nil {
 		return err
 	}
@@ -33,30 +46,30 @@ func ScaleManifest(c *gin.Context, sm ScaleManifestRequest) error {
 		},
 	}
 
-	if err = kc.SetDynamicClientForConfig(config); err != nil {
+	if err = s.kc.SetDynamicClientForConfig(config); err != nil {
 		return err
 	}
 
-	a := strings.Split(sm.ManifestName, " ")
+	a := strings.Split(s.sm.ManifestName, " ")
 	kind := a[0]
 	name := a[1]
 
-	u, err := kc.Get(kind, name, sm.Location)
+	u, err := s.kc.Get(kind, name, s.sm.Location)
 	if err != nil {
 		return err
 	}
 
+	// TODO need to allow scaling for other kinds.
 	switch strings.ToLower(kind) {
 	case "deployment":
 		d := kubernetes.NewDeployment(u.Object)
 
-		replicas, err := strconv.Atoi(sm.Replicas)
+		replicas, err := strconv.Atoi(s.sm.Replicas)
 		if err != nil {
 			return err
 		}
 
 		desiredReplicas := int32(replicas)
-
 		d.SetReplicas(&desiredReplicas)
 
 		scaledManifestObject, err := d.ToUnstructured()
@@ -64,7 +77,7 @@ func ScaleManifest(c *gin.Context, sm ScaleManifestRequest) error {
 			return err
 		}
 
-		_, err = kc.Apply(&scaledManifestObject)
+		_, err = s.kc.Apply(&scaledManifestObject)
 		if err != nil {
 			return err
 		}
