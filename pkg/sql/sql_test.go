@@ -3,6 +3,7 @@ package sql_test
 import (
 	"database/sql"
 
+	clouddriver "github.com/billiford/go-clouddriver/pkg"
 	"github.com/billiford/go-clouddriver/pkg/kubernetes"
 	. "github.com/billiford/go-clouddriver/pkg/sql"
 
@@ -156,6 +157,72 @@ var _ = Describe("Sql", func() {
 		})
 	})
 
+	Describe("#CreateWritePermission", func() {
+		var wp clouddriver.WritePermission
+
+		BeforeEach(func() {
+			wp = clouddriver.WritePermission{
+				ID:          "test-id",
+				AccountName: "test-account-name",
+				WriteGroup:  "test-write-group",
+			}
+		})
+
+		JustBeforeEach(func() {
+			err = c.CreateWritePermission(wp)
+		})
+
+		When("it succeeds", func() {
+			BeforeEach(func() {
+				mock.ExpectBegin()
+				mock.ExpectExec(`(?i)^INSERT INTO "provider_write_permissions" \(` +
+					`"id",` +
+					`"account_name",` +
+					`"write_group"` +
+					`\) VALUES \(\?,\?,\?\)$`).
+					WillReturnResult(sqlmock.NewResult(1, 1))
+				mock.ExpectCommit()
+			})
+
+			It("succeeds", func() {
+				Expect(err).To(BeNil())
+			})
+		})
+	})
+
+	Describe("#CreateReadPermission", func() {
+		var rp clouddriver.ReadPermission
+
+		BeforeEach(func() {
+			rp = clouddriver.ReadPermission{
+				ID:          "test-id",
+				AccountName: "test-account-name",
+				ReadGroup:   "test-write-group",
+			}
+		})
+
+		JustBeforeEach(func() {
+			err = c.CreateReadPermission(rp)
+		})
+
+		When("it succeeds", func() {
+			BeforeEach(func() {
+				mock.ExpectBegin()
+				mock.ExpectExec(`(?i)^INSERT INTO "provider_read_permissions" \(` +
+					`"id",` +
+					`"account_name",` +
+					`"read_group"` +
+					`\) VALUES \(\?,\?,\?\)$`).
+					WillReturnResult(sqlmock.NewResult(1, 1))
+				mock.ExpectCommit()
+			})
+
+			It("succeeds", func() {
+				Expect(err).To(BeNil())
+			})
+		})
+	})
+
 	Describe("#ListKubernetesResourcesByTaskID", func() {
 		var resources []kubernetes.Resource
 
@@ -178,6 +245,78 @@ var _ = Describe("Sql", func() {
 					`version ` +
 					`FROM "kubernetes_resources" ` +
 					` WHERE \(task_id = \?\)$`).
+					WillReturnRows(sqlRows)
+				mock.ExpectCommit()
+			})
+
+			It("succeeds", func() {
+				Expect(err).To(BeNil())
+				Expect(resources).To(HaveLen(2))
+			})
+		})
+	})
+
+	Describe("#ListKubernetesProviders", func() {
+		var providers []kubernetes.Provider
+
+		JustBeforeEach(func() {
+			providers, err = c.ListKubernetesProviders()
+		})
+
+		When("it succeeds", func() {
+			BeforeEach(func() {
+				sqlRows := sqlmock.NewRows([]string{"name", "host", "ca_data"}).
+					AddRow("name1", "host1", "ca_data1").
+					AddRow("name2", "host2", "ca_data2")
+				mock.ExpectQuery(`(?i)^SELECT ` +
+					`name, ` +
+					`host, ` +
+					`ca_data ` +
+					`FROM "kubernetes_providers"$`).
+					WillReturnRows(sqlRows)
+				mock.ExpectCommit()
+			})
+
+			It("succeeds", func() {
+				Expect(err).To(BeNil())
+				Expect(providers).To(HaveLen(2))
+			})
+		})
+	})
+
+	Describe("#ListKubernetesResourcesByFields", func() {
+		var resources []kubernetes.Resource
+		fields := []string{}
+
+		BeforeEach(func() {
+			fields = []string{"field1", "field2"}
+		})
+
+		JustBeforeEach(func() {
+			resources, err = c.ListKubernetesResourcesByFields(fields...)
+		})
+
+		When("no fields are provided", func() {
+			BeforeEach(func() {
+				fields = []string{}
+			})
+
+			It("returns an error", func() {
+				Expect(err).ToNot(BeNil())
+				Expect(err.Error()).To(Equal("no fields provided"))
+			})
+		})
+
+		When("it succeeds", func() {
+			BeforeEach(func() {
+				sqlRows := sqlmock.NewRows([]string{"group", "name"}).
+					AddRow("group1", "name1").
+					AddRow("group2", "name2")
+				mock.ExpectQuery(`(?i)^SELECT ` +
+					`field1, ` +
+					`field2 ` +
+					`FROM "kubernetes_resources" ` +
+					` GROUP BY field1, field2$`).
 					WillReturnRows(sqlRows)
 				mock.ExpectCommit()
 			})
@@ -213,6 +352,62 @@ var _ = Describe("Sql", func() {
 			It("succeeds", func() {
 				Expect(err).To(BeNil())
 				Expect(accounts).To(HaveLen(2))
+			})
+		})
+	})
+
+	Describe("#ListReadGroupsByAccountName", func() {
+		var groups []string
+
+		JustBeforeEach(func() {
+			groups, err = c.ListReadGroupsByAccountName("test-account-name")
+		})
+
+		When("it succeeds", func() {
+			BeforeEach(func() {
+				sqlRows := sqlmock.NewRows([]string{"read_group"}).
+					AddRow("group1").
+					AddRow("group2")
+				mock.ExpectQuery(`(?i)^SELECT ` +
+					`read_group ` +
+					`FROM "provider_read_permissions" ` +
+					` WHERE \(account_name = \?\) ` +
+					`GROUP BY read_group`).
+					WillReturnRows(sqlRows)
+				mock.ExpectCommit()
+			})
+
+			It("succeeds", func() {
+				Expect(err).To(BeNil())
+				Expect(groups).To(HaveLen(2))
+			})
+		})
+	})
+
+	Describe("#ListWriteGroupsByAccountName", func() {
+		var groups []string
+
+		JustBeforeEach(func() {
+			groups, err = c.ListWriteGroupsByAccountName("test-account-name")
+		})
+
+		When("it succeeds", func() {
+			BeforeEach(func() {
+				sqlRows := sqlmock.NewRows([]string{"write_group"}).
+					AddRow("group1").
+					AddRow("group2")
+				mock.ExpectQuery(`(?i)^SELECT ` +
+					`write_group ` +
+					`FROM "provider_write_permissions" ` +
+					` WHERE \(account_name = \?\) ` +
+					`GROUP BY write_group`).
+					WillReturnRows(sqlRows)
+				mock.ExpectCommit()
+			})
+
+			It("succeeds", func() {
+				Expect(err).To(BeNil())
+				Expect(groups).To(HaveLen(2))
 			})
 		})
 	})

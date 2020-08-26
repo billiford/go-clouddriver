@@ -73,6 +73,27 @@ func Connect(driver string, connection interface{}) (*gorm.DB, error) {
 	return db, nil
 }
 
+func Instance(c *gin.Context) Client {
+	return c.MustGet(ClientInstanceKey).(Client)
+}
+
+type Config struct {
+	User     string
+	Password string
+	Host     string
+	Name     string
+}
+
+// Get connection to the DB.
+func Connection(c Config) string {
+	if c.User == "" || c.Password == "" || c.Host == "" || c.Name == "" {
+		return "clouddriver.db"
+	}
+
+	return fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=utf8&parseTime=True&loc=UTC",
+		c.User, c.Password, c.Host, c.Name)
+}
+
 func (c *client) GetKubernetesProvider(name string) (kubernetes.Provider, error) {
 	var p kubernetes.Provider
 	db := c.db.Select("host, ca_data, bearer_token").Where("name = ?", name).First(&p)
@@ -177,25 +198,4 @@ func (c *client) ListWriteGroupsByAccountName(accountName string) ([]string, err
 	}
 
 	return groups, db.Error
-}
-
-func Instance(c *gin.Context) Client {
-	return c.MustGet(ClientInstanceKey).(Client)
-}
-
-type Config struct {
-	User     string
-	Password string
-	Host     string
-	Name     string
-}
-
-// Get connection to the DB.
-func Connection(c Config) string {
-	if c.User == "" || c.Password == "" || c.Host == "" || c.Name == "" {
-		return "clouddriver.db"
-	}
-
-	return fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=utf8&parseTime=True&loc=UTC",
-		c.User, c.Password, c.Host, c.Name)
 }

@@ -16,6 +16,7 @@ type Pod interface {
 	GetNamespace() string
 	GetName() string
 	GetUID() string
+	Object() *v1.Pod
 }
 
 func NewPod(m map[string]interface{}) Pod {
@@ -28,6 +29,10 @@ func NewPod(m map[string]interface{}) Pod {
 
 type pod struct {
 	p *v1.Pod
+}
+
+func (p *pod) Object() *v1.Pod {
+	return p.p
 }
 
 func (p *pod) GetObjectMeta() metav1.ObjectMeta {

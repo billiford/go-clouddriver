@@ -15,6 +15,7 @@ type ReplicaSet interface {
 	GetReplicaSetStatus() v1.ReplicaSetStatus
 	LabelTemplate(string, string)
 	Status() manifest.Status
+	SetReplicas(*int32)
 	ListImages() []string
 	Object() *v1.ReplicaSet
 }
@@ -71,15 +72,15 @@ func (rs *replicaSet) LabelTemplate(key, value string) {
 	rs.rs.Spec.Template.ObjectMeta.Labels = labels
 }
 
+func (rs *replicaSet) SetReplicas(replicas *int32) {
+	rs.rs.Spec.Replicas = replicas
+}
+
 func (rs *replicaSet) GetReplicaSetSpec() v1.ReplicaSetSpec {
 	return rs.rs.Spec
 }
 
 func (rs *replicaSet) GetReplicaSetStatus() v1.ReplicaSetStatus {
-	return rs.rs.Status
-}
-
-func (rs *replicaSet) GetStatus() v1.ReplicaSetStatus {
 	return rs.rs.Status
 }
 
