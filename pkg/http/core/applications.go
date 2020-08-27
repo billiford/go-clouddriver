@@ -58,23 +58,6 @@ func ListApplications(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
-func clusterNamesForSpinnakerApp(application string, rs []kubernetes.Resource) map[string][]string {
-	clusterNames := map[string][]string{}
-
-	for _, r := range rs {
-		if r.SpinnakerApp == application {
-			if _, ok := clusterNames[r.AccountName]; !ok {
-				clusterNames[r.AccountName] = []string{}
-			}
-			resources := clusterNames[r.AccountName]
-			resources = append(resources, fmt.Sprintf("%s %s", r.Kind, r.Name))
-			clusterNames[r.AccountName] = resources
-		}
-	}
-
-	return clusterNames
-}
-
 func uniqueSpinnakerApps(rs []kubernetes.Resource) []string {
 	apps := []string{}
 
@@ -94,6 +77,23 @@ func contains(s []string, e string) bool {
 		}
 	}
 	return false
+}
+
+func clusterNamesForSpinnakerApp(application string, rs []kubernetes.Resource) map[string][]string {
+	clusterNames := map[string][]string{}
+
+	for _, r := range rs {
+		if r.SpinnakerApp == application {
+			if _, ok := clusterNames[r.AccountName]; !ok {
+				clusterNames[r.AccountName] = []string{}
+			}
+			resources := clusterNames[r.AccountName]
+			resources = append(resources, fmt.Sprintf("%s %s", r.Kind, r.Name))
+			clusterNames[r.AccountName] = resources
+		}
+	}
+
+	return clusterNames
 }
 
 type ServerGroupManagersResponse []ServerGroupManager
@@ -374,6 +374,7 @@ func ListLoadBalancers(c *gin.Context) {
 			LabelSelector: kubernetes.LabelKubernetesSpinnakerApp + "=" + application,
 		}
 
+		// TODO get these using the dynamic account.
 		// Create a GVR for ingresses.
 		ingressGVR := schema.GroupVersionResource{
 			Group:    "networking.k8s.io",
@@ -478,6 +479,9 @@ type ClustersResponse map[string][]string
 
 // List clusters, which for kubernetes is a map of provider names to kubernetes deployment
 // kinds and names.
+//
+// TODO For now we are pulling this from the DB, but it might be possible to make API calls to
+// the cluster.
 func ListClusters(c *gin.Context) {
 	sc := sql.Instance(c)
 

@@ -340,6 +340,34 @@ const payloadCredentials = `[
             }
           ]`
 
+const payloadApplications = `[
+            {
+              "attributes": {
+                "name": "test-spinnaker-app1"
+              },
+              "clusterNames": {
+                "test-account1": [
+                  "test-kind1 test-name1"
+                ]
+              },
+              "name": "test-spinnaker-app1"
+            },
+            {
+              "attributes": {
+                "name": "test-spinnaker-app2"
+              },
+              "clusterNames": {
+                "test-account2": [
+                  "test-kind2 test-name2"
+                ],
+                "test-account3": [
+                  "test-kind3 test-name3"
+                ]
+              },
+              "name": "test-spinnaker-app2"
+            }
+          ]`
+
 const payloadGetAccountCredentials = `{
             "accountType": "test-account",
             "cacheThreads": 0,
@@ -623,7 +651,7 @@ const payloadCredentialsExpandTrueNoNamespaces = `[
               }
             ]`
 
-const payloadServerGroupManagers = `[
+const payloadServerGroupManagersResponse = `[
   {
     "account": "gke_github-replication-sandbox_us-central1_sandbox-us-central1-agent-dev",
     "accountName": "gke_github-replication-sandbox_us-central1_sandbox-us-central1-agent-dev",
@@ -916,324 +944,426 @@ const payloadServerGroupManagers = `[
   }
 ]`
 
+const payloadServerGroupManagers = `[
+            {
+              "account": "account1",
+              "accountName": "account1",
+              "cloudProvider": "kubernetes",
+              "createdTime": 1581603123000,
+              "key": {
+                "account": "account1",
+                "group": "deployment",
+                "kubernetesKind": "deployment",
+                "name": "test-deployment1",
+                "namespace": "test-namespace1",
+                "provider": "kubernetes"
+              },
+              "kind": "deployment",
+              "labels": {
+                "label1": "test-label1"
+              },
+              "manifest": {
+                "apiVersion": "apps/v1",
+                "kind": "Deployment",
+                "metadata": {
+                  "creationTimestamp": "2020-02-13T14:12:03Z",
+                  "labels": {
+                    "label1": "test-label1"
+                  },
+                  "name": "test-deployment1",
+                  "namespace": "test-namespace1",
+                  "uid": "cec15437-4e6a-11ea-9788-4201ac100006"
+                }
+              },
+              "moniker": {
+                "app": "test-application",
+                "cluster": "deployment test-deployment1"
+              },
+              "name": "deployment test-deployment1",
+              "providerType": "kubernetes",
+              "region": "test-namespace1",
+              "serverGroups": [
+                {
+                  "account": "account1",
+                  "moniker": {
+                    "app": "test-application",
+                    "cluster": "deployment test-deployment1",
+                    "sequence": 236
+                  },
+                  "name": "replicaset test-rs1",
+                  "namespace": "test-namespace1",
+                  "region": "test-namespace1"
+                }
+              ],
+              "type": "kubernetes",
+              "uid": "cec15437-4e6a-11ea-9788-4201ac100006",
+              "zone": "test-application"
+            },
+            {
+              "account": "account2",
+              "accountName": "account2",
+              "cloudProvider": "kubernetes",
+              "createdTime": 1581516663000,
+              "key": {
+                "account": "account2",
+                "group": "deployment",
+                "kubernetesKind": "deployment",
+                "name": "test-deployment2",
+                "namespace": "test-namespace2",
+                "provider": "kubernetes"
+              },
+              "kind": "deployment",
+              "labels": {
+                "label1": "test-label1"
+              },
+              "manifest": {
+                "apiVersion": "apps/v1",
+                "kind": "Deployment",
+                "metadata": {
+                  "creationTimestamp": "2020-02-12T14:11:03Z",
+                  "labels": {
+                    "label1": "test-label1"
+                  },
+                  "name": "test-deployment2",
+                  "namespace": "test-namespace2",
+                  "uid": "bec15437-4e6a-11ea-9788-4201ac100006"
+                }
+              },
+              "moniker": {
+                "app": "test-application",
+                "cluster": "deployment test-deployment2"
+              },
+              "name": "deployment test-deployment2",
+              "providerType": "kubernetes",
+              "region": "test-namespace2",
+              "serverGroups": [
+                {
+                  "account": "account2",
+                  "moniker": {
+                    "app": "test-application",
+                    "cluster": "deployment test-deployment2",
+                    "sequence": 19
+                  },
+                  "name": "replicaset test-rs2",
+                  "namespace": "test-namespace2",
+                  "region": "test-namespace2"
+                }
+              ],
+              "type": "kubernetes",
+              "uid": "bec15437-4e6a-11ea-9788-4201ac100006",
+              "zone": "test-application"
+            }
+          ]`
+
+const payloadListServerGroups = `[
+            {
+              "account": "account1",
+              "buildInfo": {
+                "images": [
+                  "test-image1",
+                  "test-image2"
+                ]
+              },
+              "capacity": {
+                "desired": 1,
+                "pinned": false
+              },
+              "cloudProvider": "kubernetes",
+              "cluster": "deployment test-deployment1",
+              "createdTime": 1581603123000,
+              "instanceCounts": {
+                "down": 0,
+                "outOfService": 0,
+                "starting": 0,
+                "total": 1,
+                "unknown": 0,
+                "up": 0
+              },
+              "instances": [
+                {
+                  "availabilityZone": "test-namespace1",
+                  "health": [
+                    {
+                      "state": "Down",
+                      "type": "kubernetes/pod"
+                    },
+                    {
+                      "state": "Down",
+                      "type": "kubernetes/container"
+                    }
+                  ],
+                  "healthState": "Down",
+                  "id": "cec15437-4e6a-11ea-9788-4201ac100006",
+                  "key": {
+                    "account": "",
+                    "group": "",
+                    "kubernetesKind": "",
+                    "name": "",
+                    "namespace": "",
+                    "provider": ""
+                  },
+                  "moniker": {
+                    "app": "",
+                    "cluster": ""
+                  },
+                  "name": "pod test-pod1"
+                }
+              ],
+              "isDisabled": false,
+              "loadBalancers": null,
+              "moniker": {
+                "app": "test-deployment1",
+                "cluster": "deployment test-deployment1",
+                "sequence": 19
+              },
+              "name": "replicaset test-rs1",
+              "region": "test-namespace1",
+              "securityGroups": null,
+              "serverGroupManagers": [
+                {
+                  "account": "account1",
+                  "location": "test-namespace1",
+                  "name": "test-deployment1"
+                }
+              ],
+              "type": "kubernetes"
+            },
+            {
+              "account": "account2",
+              "buildInfo": {
+                "images": [
+                  "test-image3",
+                  "test-image4"
+                ]
+              },
+              "capacity": {
+                "desired": 1,
+                "pinned": false
+              },
+              "cloudProvider": "kubernetes",
+              "cluster": "deployment test-deployment1",
+              "createdTime": 1581603123000,
+              "instanceCounts": {
+                "down": 0,
+                "outOfService": 0,
+                "starting": 0,
+                "total": 1,
+                "unknown": 0,
+                "up": 0
+              },
+              "instances": [
+                {
+                  "availabilityZone": "test-namespace2",
+                  "health": [
+                    {
+                      "state": "Down",
+                      "type": "kubernetes/pod"
+                    },
+                    {
+                      "state": "Down",
+                      "type": "kubernetes/container"
+                    }
+                  ],
+                  "healthState": "Down",
+                  "id": "cec15437-4e6a-11ea-9788-4201ac100006",
+                  "key": {
+                    "account": "",
+                    "group": "",
+                    "kubernetesKind": "",
+                    "name": "",
+                    "namespace": "",
+                    "provider": ""
+                  },
+                  "moniker": {
+                    "app": "",
+                    "cluster": ""
+                  },
+                  "name": "pod test-pod2"
+                }
+              ],
+              "isDisabled": false,
+              "loadBalancers": null,
+              "moniker": {
+                "app": "test-deployment2",
+                "cluster": "deployment test-deployment1",
+                "sequence": 19
+              },
+              "name": "replicaset test-rs2",
+              "region": "test-namespace2",
+              "securityGroups": null,
+              "serverGroupManagers": [
+                {
+                  "account": "account2",
+                  "location": "test-namespace2",
+                  "name": "test-deployment2"
+                }
+              ],
+              "type": "kubernetes"
+            }
+          ]`
+
 const payloadLoadBalancers = `[
-  {
-    "account": "gke_github-replication-sandbox_us-central1_sandbox-us-central1-agent_smoketest-dev",
-    "accountName": "gke_github-replication-sandbox_us-central1_sandbox-us-central1-agent_smoketest-dev",
-    "cloudProvider": "kubernetes",
-    "createdTime": 1585836001000,
-    "key": {
-      "account": "gke_github-replication-sandbox_us-central1_sandbox-us-central1-agent_smoketest-dev",
-      "group": "service",
-      "kubernetesKind": "service",
-      "name": "helloworld",
-      "namespace": "smoketest",
-      "provider": "kubernetes"
-    },
-    "kind": "service",
-    "labels": {
-      "app.kubernetes.io/managed-by": "spinnaker",
-      "app.kubernetes.io/name": "smoketests"
-    },
-    "manifest": {
-      "apiVersion": "v1",
-      "kind": "Service",
-      "metadata": {
-        "annotations": {
-          "artifact.spinnaker.io/location": "smoketest",
-          "artifact.spinnaker.io/name": "helloworld",
-          "artifact.spinnaker.io/type": "kubernetes/service",
-          "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"v1\",\"kind\":\"Service\",\"metadata\":{\"annotations\":{\"artifact.spinnaker.io/location\":\"smoketest\",\"artifact.spinnaker.io/name\":\"helloworld\",\"artifact.spinnaker.io/type\":\"kubernetes/service\",\"moniker.spinnaker.io/application\":\"smoketests\",\"moniker.spinnaker.io/cluster\":\"service helloworld\"},\"labels\":{\"app.kubernetes.io/managed-by\":\"spinnaker\",\"app.kubernetes.io/name\":\"smoketests\"},\"name\":\"helloworld\",\"namespace\":\"smoketest\"},\"spec\":{\"ports\":[{\"name\":\"http\",\"port\":80,\"protocol\":\"TCP\",\"targetPort\":80}],\"selector\":{\"lb\":\"helloworld\"}}}\n",
-          "moniker.spinnaker.io/application": "smoketests",
-          "moniker.spinnaker.io/cluster": "service helloworld"
-        },
-        "creationTimestamp": "2020-04-02T14:00:01Z",
-        "labels": {
-          "app.kubernetes.io/managed-by": "spinnaker",
-          "app.kubernetes.io/name": "smoketests"
-        },
-        "name": "helloworld",
-        "namespace": "smoketest",
-        "resourceVersion": "60136599",
-        "selfLink": "/api/v1/namespaces/smoketest/services/helloworld",
-        "uid": "3f10f968-74ea-11ea-b2c9-4201ac10010a"
-      },
-      "spec": {
-        "clusterIP": "10.191.28.250",
-        "ports": [
-          {
-            "name": "http",
-            "port": 80,
-            "protocol": "TCP",
-            "targetPort": 80
-          }
-        ],
-        "selector": {
-          "lb": "helloworld"
-        },
-        "sessionAffinity": "None",
-        "type": "ClusterIP"
-      },
-      "status": {
-        "loadBalancer": {}
-      }
-    },
-    "moniker": {
-      "app": "smoketests",
-      "cluster": "service helloworld"
-    },
-    "name": "service helloworld",
-    "providerType": "kubernetes",
-    "region": "smoketest",
-    "serverGroups": [
-      {
-        "account": "gke_github-replication-sandbox_us-central1_sandbox-us-central1-agent_smoketest-dev",
-        "cloudProvider": "kubernetes",
-        "detachedInstances": [],
-        "instances": [
-          {
-            "health": {
-              "platform": "platform",
-              "source": "Container helloworld",
-              "state": "Up",
-              "type": "kuberentes/container"
+            {
+              "account": "account1",
+              "cloudProvider": "kubernetes",
+              "labels": {
+                "label1": "test-label1"
+              },
+              "moniker": {
+                "app": "test-application",
+                "cluster": "ingress test-ingress1"
+              },
+              "name": "ingress test-ingress1",
+              "region": "test-namespace1",
+              "serverGroups": null,
+              "type": "kubernetes",
+              "accountName": "account1",
+              "createdTime": 1581603123000,
+              "key": {
+                "account": "account1",
+                "group": "networking.k8s.io",
+                "kubernetesKind": "ingress",
+                "name": "ingress test-ingress1",
+                "namespace": "test-namespace1",
+                "provider": "kubernetes"
+              },
+              "kind": "ingress",
+              "manifest": {
+                "apiVersion": "v1beta1",
+                "kind": "Ingress",
+                "metadata": {
+                  "creationTimestamp": "2020-02-13T14:12:03Z",
+                  "labels": {
+                    "label1": "test-label1"
+                  },
+                  "name": "test-ingress1",
+                  "namespace": "test-namespace1",
+                  "uid": "cec15437-4e6a-11ea-9788-4201ac100006"
+                }
+              },
+              "providerType": "kubernetes",
+              "uid": "cec15437-4e6a-11ea-9788-4201ac100006",
+              "zone": "test-application"
             },
-            "id": "e89c8446-e0ca-11ea-be31-4201ac100108",
-            "name": "pod helloworld-v002-2fzq2",
-            "zone": "smoketest"
-          }
-        ],
-        "isDisabled": false,
-        "name": "replicaSet helloworld-v002",
-        "region": "smoketest"
-      },
-      {
-        "account": "gke_github-replication-sandbox_us-central1_sandbox-us-central1-agent_smoketest-dev",
-        "cloudProvider": "kubernetes",
-        "detachedInstances": [],
-        "instances": [
-          {
-            "health": {
-              "platform": "platform",
-              "source": "Container helloworld",
-              "state": "Up",
-              "type": "kuberentes/container"
+            {
+              "account": "account1",
+              "cloudProvider": "kubernetes",
+              "moniker": {
+                "app": "test-application",
+                "cluster": "service test-service1"
+              },
+              "name": "service test-service1",
+              "region": "test-namespace1",
+              "serverGroups": null,
+              "type": "kubernetes",
+              "accountName": "account1",
+              "createdTime": -62135596800000,
+              "key": {
+                "account": "account1",
+                "group": "",
+                "kubernetesKind": "service",
+                "name": "service test-service1",
+                "namespace": "test-namespace1",
+                "provider": "kubernetes"
+              },
+              "kind": "service",
+              "manifest": {
+                "apiVersion": "v1",
+                "kind": "Service",
+                "metadata": {
+                  "name": "test-service1",
+                  "namespace": "test-namespace1"
+                }
+              },
+              "providerType": "kubernetes",
+              "zone": "test-application"
             },
-            "id": "6e98d7ab-e0ca-11ea-be31-4201ac100108",
-            "name": "pod helloworld-v001-89649",
-            "zone": "smoketest"
-          }
-        ],
-        "isDisabled": false,
-        "name": "replicaSet helloworld-v001",
-        "region": "smoketest"
-      },
-      {
-        "account": "gke_github-replication-sandbox_us-central1_sandbox-us-central1-agent_smoketest-dev",
-        "cloudProvider": "kubernetes",
-        "detachedInstances": [],
-        "instances": [
-          {
-            "health": {
-              "platform": "platform",
-              "source": "Container helloworld",
-              "state": "Up",
-              "type": "kuberentes/container"
+            {
+              "account": "account2",
+              "cloudProvider": "kubernetes",
+              "labels": {
+                "label1": "test-label1"
+              },
+              "moniker": {
+                "app": "test-application",
+                "cluster": "ingress test-ingress2"
+              },
+              "name": "ingress test-ingress2",
+              "region": "test-namespace2",
+              "serverGroups": null,
+              "type": "kubernetes",
+              "accountName": "account2",
+              "createdTime": 1581603123000,
+              "key": {
+                "account": "account2",
+                "group": "networking.k8s.io",
+                "kubernetesKind": "ingress",
+                "name": "ingress test-ingress2",
+                "namespace": "test-namespace2",
+                "provider": "kubernetes"
+              },
+              "kind": "ingress",
+              "manifest": {
+                "apiVersion": "v1beta1",
+                "kind": "Ingress",
+                "metadata": {
+                  "creationTimestamp": "2020-02-13T14:12:03Z",
+                  "labels": {
+                    "label1": "test-label1"
+                  },
+                  "name": "test-ingress2",
+                  "namespace": "test-namespace2",
+                  "uid": "cec15437-4e6a-11ea-9788-4201ac100006"
+                }
+              },
+              "providerType": "kubernetes",
+              "uid": "cec15437-4e6a-11ea-9788-4201ac100006",
+              "zone": "test-application"
             },
-            "id": "059054f7-e0cb-11ea-be31-4201ac100108",
-            "name": "pod helloworld-v003-2lchg",
-            "zone": "smoketest"
-          }
-        ],
-        "isDisabled": false,
-        "name": "replicaSet helloworld-v003",
-        "region": "smoketest"
-      },
-      {
-        "account": "gke_github-replication-sandbox_us-central1_sandbox-us-central1-agent_smoketest-dev",
-        "cloudProvider": "kubernetes",
-        "detachedInstances": [],
-        "instances": [
-          {
-            "health": {
-              "platform": "platform",
-              "source": "Container helloworld",
-              "state": "Up",
-              "type": "kuberentes/container"
-            },
-            "id": "afe8f4b9-e0b0-11ea-be31-4201ac100108",
-            "name": "pod helloworld-v000-4qq7p",
-            "zone": "smoketest"
-          }
-        ],
-        "isDisabled": false,
-        "name": "replicaSet helloworld-v000",
-        "region": "smoketest"
-      }
-    ],
-    "type": "kubernetes",
-    "uid": "3f10f968-74ea-11ea-b2c9-4201ac10010a",
-    "zone": "smoketest"
-  },
-  {
-    "account": "gke_github-replication-sandbox_us-central1_sandbox-us-central1-agent-dev",
-    "accountName": "gke_github-replication-sandbox_us-central1_sandbox-us-central1-agent-dev",
-    "cloudProvider": "kubernetes",
-    "createdTime": 1585836001000,
-    "key": {
-      "account": "gke_github-replication-sandbox_us-central1_sandbox-us-central1-agent-dev",
-      "group": "service",
-      "kubernetesKind": "service",
-      "name": "helloworld",
-      "namespace": "smoketest",
-      "provider": "kubernetes"
-    },
-    "kind": "service",
-    "labels": {
-      "app.kubernetes.io/managed-by": "spinnaker",
-      "app.kubernetes.io/name": "smoketests"
-    },
-    "manifest": {
-      "apiVersion": "v1",
-      "kind": "Service",
-      "metadata": {
-        "annotations": {
-          "artifact.spinnaker.io/location": "smoketest",
-          "artifact.spinnaker.io/name": "helloworld",
-          "artifact.spinnaker.io/type": "kubernetes/service",
-          "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"v1\",\"kind\":\"Service\",\"metadata\":{\"annotations\":{\"artifact.spinnaker.io/location\":\"smoketest\",\"artifact.spinnaker.io/name\":\"helloworld\",\"artifact.spinnaker.io/type\":\"kubernetes/service\",\"moniker.spinnaker.io/application\":\"smoketests\",\"moniker.spinnaker.io/cluster\":\"service helloworld\"},\"labels\":{\"app.kubernetes.io/managed-by\":\"spinnaker\",\"app.kubernetes.io/name\":\"smoketests\"},\"name\":\"helloworld\",\"namespace\":\"smoketest\"},\"spec\":{\"ports\":[{\"name\":\"http\",\"port\":80,\"protocol\":\"TCP\",\"targetPort\":80}],\"selector\":{\"lb\":\"helloworld\"}}}\n",
-          "moniker.spinnaker.io/application": "smoketests",
-          "moniker.spinnaker.io/cluster": "service helloworld"
-        },
-        "creationTimestamp": "2020-04-02T14:00:01Z",
-        "labels": {
-          "app.kubernetes.io/managed-by": "spinnaker",
-          "app.kubernetes.io/name": "smoketests"
-        },
-        "name": "helloworld",
-        "namespace": "smoketest",
-        "resourceVersion": "60136599",
-        "selfLink": "/api/v1/namespaces/smoketest/services/helloworld",
-        "uid": "3f10f968-74ea-11ea-b2c9-4201ac10010a"
-      },
-      "spec": {
-        "clusterIP": "10.191.28.250",
-        "ports": [
-          {
-            "name": "http",
-            "port": 80,
-            "protocol": "TCP",
-            "targetPort": 80
-          }
-        ],
-        "selector": {
-          "lb": "helloworld"
-        },
-        "sessionAffinity": "None",
-        "type": "ClusterIP"
-      },
-      "status": {
-        "loadBalancer": {}
-      }
-    },
-    "moniker": {
-      "app": "smoketests",
-      "cluster": "service helloworld"
-    },
-    "name": "service helloworld",
-    "providerType": "kubernetes",
-    "region": "smoketest",
-    "serverGroups": [
-      {
-        "account": "gke_github-replication-sandbox_us-central1_sandbox-us-central1-agent-dev",
-        "cloudProvider": "kubernetes",
-        "detachedInstances": [],
-        "instances": [
-          {
-            "health": {
-              "platform": "platform",
-              "source": "Container helloworld",
-              "state": "Up",
-              "type": "kuberentes/container"
-            },
-            "id": "6e98d7ab-e0ca-11ea-be31-4201ac100108",
-            "name": "pod helloworld-v001-89649",
-            "zone": "smoketest"
-          }
-        ],
-        "isDisabled": false,
-        "name": "replicaSet helloworld-v001",
-        "region": "smoketest"
-      },
-      {
-        "account": "gke_github-replication-sandbox_us-central1_sandbox-us-central1-agent-dev",
-        "cloudProvider": "kubernetes",
-        "detachedInstances": [],
-        "instances": [
-          {
-            "health": {
-              "platform": "platform",
-              "source": "Container helloworld",
-              "state": "Up",
-              "type": "kuberentes/container"
-            },
-            "id": "afe8f4b9-e0b0-11ea-be31-4201ac100108",
-            "name": "pod helloworld-v000-4qq7p",
-            "zone": "smoketest"
-          }
-        ],
-        "isDisabled": false,
-        "name": "replicaSet helloworld-v000",
-        "region": "smoketest"
-      },
-      {
-        "account": "gke_github-replication-sandbox_us-central1_sandbox-us-central1-agent-dev",
-        "cloudProvider": "kubernetes",
-        "detachedInstances": [],
-        "instances": [
-          {
-            "health": {
-              "platform": "platform",
-              "source": "Container helloworld",
-              "state": "Up",
-              "type": "kuberentes/container"
-            },
-            "id": "e89c8446-e0ca-11ea-be31-4201ac100108",
-            "name": "pod helloworld-v002-2fzq2",
-            "zone": "smoketest"
-          }
-        ],
-        "isDisabled": false,
-        "name": "replicaSet helloworld-v002",
-        "region": "smoketest"
-      },
-      {
-        "account": "gke_github-replication-sandbox_us-central1_sandbox-us-central1-agent-dev",
-        "cloudProvider": "kubernetes",
-        "detachedInstances": [],
-        "instances": [
-          {
-            "health": {
-              "platform": "platform",
-              "source": "Container helloworld",
-              "state": "Up",
-              "type": "kuberentes/container"
-            },
-            "id": "059054f7-e0cb-11ea-be31-4201ac100108",
-            "name": "pod helloworld-v003-2lchg",
-            "zone": "smoketest"
-          }
-        ],
-        "isDisabled": false,
-        "name": "replicaSet helloworld-v003",
-        "region": "smoketest"
-      }
-    ],
-    "type": "kubernetes",
-    "uid": "3f10f968-74ea-11ea-b2c9-4201ac10010a",
-    "zone": "smoketest"
-  }
-]`
+            {
+              "account": "account2",
+              "cloudProvider": "kubernetes",
+              "moniker": {
+                "app": "test-application",
+                "cluster": "service test-service1"
+              },
+              "name": "service test-service1",
+              "region": "test-namespace1",
+              "serverGroups": null,
+              "type": "kubernetes",
+              "accountName": "account2",
+              "createdTime": -62135596800000,
+              "key": {
+                "account": "account2",
+                "group": "",
+                "kubernetesKind": "service",
+                "name": "service test-service1",
+                "namespace": "test-namespace1",
+                "provider": "kubernetes"
+              },
+              "kind": "service",
+              "manifest": {
+                "apiVersion": "v1",
+                "kind": "Service",
+                "metadata": {
+                  "name": "test-service1",
+                  "namespace": "test-namespace1"
+                }
+              },
+              "providerType": "kubernetes",
+              "zone": "test-application"
+            }
+          ]`
+
+const payloadListClusters = `{
+            "test-account1": [
+              "test-kind1 test-name1"
+            ],
+            "test-account2": [
+              "test-kind2 test-name2",
+              "test-kind3 test-name3"
+            ]
+          }`
 
 const serverGroupsResponse = `[
   {
@@ -1889,513 +2019,214 @@ const serverGroupsResponse = `[
 ]`
 
 const payloadGetServerGroup = `{
-  "account": "gke_github-replication-sandbox_us-central1_sandbox-us-central1-agent_smoketest-dev",
-  "accountName": "gke_github-replication-sandbox_us-central1_sandbox-us-central1-agent_smoketest-dev",
-  "buildInfo": {
-    "images": [
-      "gcr.io/github-replication-sandbox/rf:1.0.9"
-    ]
-  },
-  "capacity": {
-    "desired": 2,
-    "pinned": false
-  },
-  "cloudProvider": "kubernetes",
-  "createdTime": 1591791846000,
-  "disabled": false,
-  "instanceCounts": {
-    "down": 0,
-    "outOfService": 0,
-    "starting": 0,
-    "total": 2,
-    "unknown": 0,
-    "up": 2
-  },
-  "instances": [
-    {
-      "account": "gke_github-replication-sandbox_us-central1_sandbox-us-central1-agent_smoketest-dev",
-      "accountName": "gke_github-replication-sandbox_us-central1_sandbox-us-central1-agent_smoketest-dev",
-      "cloudProvider": "kubernetes",
-      "createdTime": 1592315226000,
-      "health": [
-        {
-          "platform": "platform",
-          "source": "Pod",
-          "state": "Up",
-          "type": "kubernetes/pod"
-        },
-        {
-          "platform": "platform",
-          "source": "Container frontend",
-          "state": "Up",
-          "type": "kuberentes/container"
-        }
-      ],
-      "healthState": "Up",
-      "humanReadableName": "pod smoketest-gke-598b749779-d8lk6",
-      "key": {
-        "account": "gke_github-replication-sandbox_us-central1_sandbox-us-central1-agent_smoketest-dev",
-        "group": "pod",
-        "kubernetesKind": "pod",
-        "name": "smoketest-gke-598b749779-d8lk6",
-        "namespace": "smoketest",
-        "provider": "kubernetes"
-      },
-      "kind": "pod",
-      "labels": {
-        "app": "smoketest-gke",
-        "app.kubernetes.io/managed-by": "spinnaker",
-        "app.kubernetes.io/name": "smoketests",
-        "pod-template-hash": "598b749779"
-      },
-      "manifest": {
-        "apiVersion": "v1",
-        "kind": "Pod",
-        "metadata": {
-          "annotations": {
-            "artifact.spinnaker.io/location": "smoketest",
-            "artifact.spinnaker.io/name": "smoketest-gke",
-            "artifact.spinnaker.io/type": "kubernetes/deployment",
-            "moniker.spinnaker.io/application": "smoketests",
-            "moniker.spinnaker.io/cluster": "deployment smoketest-gke"
-          },
-          "creationTimestamp": "2020-06-16T13:47:06Z",
-          "generateName": "smoketest-gke-598b749779-",
-          "labels": {
-            "app": "smoketest-gke",
-            "app.kubernetes.io/managed-by": "spinnaker",
-            "app.kubernetes.io/name": "smoketests",
-            "pod-template-hash": "598b749779"
-          },
-          "name": "smoketest-gke-598b749779-d8lk6",
-          "namespace": "smoketest",
-          "ownerReferences": [
-            {
-              "apiVersion": "apps/v1",
-              "blockOwnerDeletion": true,
-              "controller": true,
-              "kind": "ReplicaSet",
-              "name": "smoketest-gke-598b749779",
-              "uid": "4741c722-ab15-11ea-bb79-4201ac10010a"
-            }
-          ],
-          "resourceVersion": "60136811",
-          "selfLink": "/api/v1/namespaces/smoketest/pods/smoketest-gke-598b749779-d8lk6",
-          "uid": "ddc7fbe3-afd7-11ea-bb79-4201ac10010a"
-        },
-        "spec": {
-          "containers": [
-            {
-              "image": "gcr.io/github-replication-sandbox/rf:1.0.9",
-              "imagePullPolicy": "IfNotPresent",
-              "name": "frontend",
-              "resources": {},
-              "terminationMessagePath": "/dev/termination-log",
-              "terminationMessagePolicy": "File",
-              "volumeMounts": [
-                {
-                  "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount",
-                  "name": "default-token-q67rl",
-                  "readOnly": true
-                }
+            "account": "test-account",
+            "accountName": "test-account",
+            "buildInfo": {
+              "images": [
+                "test-image3",
+                "test-image4"
               ]
-            }
-          ],
-          "dnsPolicy": "ClusterFirst",
-          "enableServiceLinks": true,
-          "nodeName": "gke-sandbox-us-centr-sandbox-us-centr-0ad5d721-zpdb",
-          "priority": 0,
-          "restartPolicy": "Always",
-          "schedulerName": "default-scheduler",
-          "securityContext": {},
-          "serviceAccount": "default",
-          "serviceAccountName": "default",
-          "terminationGracePeriodSeconds": 30,
-          "tolerations": [
-            {
-              "effect": "NoExecute",
-              "key": "node.kubernetes.io/not-ready",
-              "operator": "Exists",
-              "tolerationSeconds": 300
             },
-            {
-              "effect": "NoExecute",
-              "key": "node.kubernetes.io/unreachable",
-              "operator": "Exists",
-              "tolerationSeconds": 300
-            }
-          ],
-          "volumes": [
-            {
-              "name": "default-token-q67rl",
-              "secret": {
-                "defaultMode": 420,
-                "secretName": "default-token-q67rl"
+            "capacity": {
+              "desired": 1,
+              "pinned": false
+            },
+            "cloudProvider": "kubernetes",
+            "createdTime": 1581603123000,
+            "disabled": false,
+            "instanceCounts": {
+              "down": 0,
+              "outOfService": 0,
+              "starting": 0,
+              "total": 1,
+              "unknown": 0,
+              "up": 0
+            },
+            "instances": [
+              {
+                "account": "test-account",
+                "accountName": "test-account",
+                "availabilityZone": "test-namespace1",
+                "cloudProvider": "kubernetes",
+                "createdTime": 1581603123000,
+                "health": [
+                  {
+                    "state": "Down",
+                    "type": "kubernetes/pod"
+                  },
+                  {
+                    "state": "Down",
+                    "type": "kubernetes/container"
+                  }
+                ],
+                "healthState": "Down",
+                "humanReadableName": "pod test-pod1",
+                "id": "cec15437-4e6a-11ea-9788-4201ac100006",
+                "key": {
+                  "account": "test-account",
+                  "group": "pod",
+                  "kubernetesKind": "pod",
+                  "name": "test-pod1",
+                  "namespace": "test-namespace1",
+                  "provider": "kubernetes"
+                },
+                "kind": "pod",
+                "labels": {
+                  "label1": "test-label1"
+                },
+                "manifest": {
+                  "apiVersion": "v1",
+                  "kind": "Pod",
+                  "metadata": {
+                    "creationTimestamp": "2020-02-13T14:12:03Z",
+                    "labels": {
+                      "label1": "test-label1"
+                    },
+                    "name": "test-pod1",
+                    "namespace": "test-namespace1",
+                    "ownerReferences": [
+                      {
+                        "name": "test-rs1"
+                      }
+                    ],
+                    "uid": "cec15437-4e6a-11ea-9788-4201ac100006"
+                  }
+                },
+                "moniker": {
+                  "app": "test-application",
+                  "cluster": ""
+                },
+                "name": "pod test-pod1",
+                "providerType": "kubernetes",
+                "region": "test-namespace1",
+                "type": "kubernetes",
+                "uid": "cec15437-4e6a-11ea-9788-4201ac100006",
+                "zone": "test-namespace1"
+              },
+              {
+                "account": "test-account",
+                "accountName": "test-account",
+                "availabilityZone": "test-namespace2",
+                "cloudProvider": "kubernetes",
+                "createdTime": 1581603123000,
+                "health": [
+                  {
+                    "state": "Down",
+                    "type": "kubernetes/pod"
+                  },
+                  {
+                    "state": "Down",
+                    "type": "kubernetes/container"
+                  }
+                ],
+                "healthState": "Down",
+                "humanReadableName": "pod test-pod2",
+                "id": "cec15437-4e6a-11ea-9788-4201ac100006",
+                "key": {
+                  "account": "test-account",
+                  "group": "pod",
+                  "kubernetesKind": "pod",
+                  "name": "test-pod2",
+                  "namespace": "test-namespace2",
+                  "provider": "kubernetes"
+                },
+                "kind": "pod",
+                "labels": {
+                  "label1": "test-label1"
+                },
+                "manifest": {
+                  "apiVersion": "v1",
+                  "kind": "Pod",
+                  "metadata": {
+                    "creationTimestamp": "2020-02-13T14:12:03Z",
+                    "labels": {
+                      "label1": "test-label1"
+                    },
+                    "name": "test-pod2",
+                    "namespace": "test-namespace2",
+                    "ownerReferences": [
+                      {
+                        "name": "test-rs1"
+                      }
+                    ],
+                    "uid": "cec15437-4e6a-11ea-9788-4201ac100006"
+                  }
+                },
+                "moniker": {
+                  "app": "test-application",
+                  "cluster": ""
+                },
+                "name": "pod test-pod2",
+                "providerType": "kubernetes",
+                "region": "test-namespace2",
+                "type": "kubernetes",
+                "uid": "cec15437-4e6a-11ea-9788-4201ac100006",
+                "zone": "test-namespace2"
               }
-            }
-          ]
-        },
-        "status": {
-          "conditions": [
-            {
-              "lastTransitionTime": "2020-06-16T13:47:06Z",
-              "status": "True",
-              "type": "Initialized"
+            ],
+            "key": {
+              "account": "test-account",
+              "group": "ReplicaSet",
+              "kubernetesKind": "ReplicaSet",
+              "name": "test-rs1",
+              "namespace": "test-namespace1",
+              "provider": "kubernetes"
             },
-            {
-              "lastTransitionTime": "2020-06-16T13:47:08Z",
-              "status": "True",
-              "type": "Ready"
-            },
-            {
-              "lastTransitionTime": "2020-06-16T13:47:08Z",
-              "status": "True",
-              "type": "ContainersReady"
-            },
-            {
-              "lastTransitionTime": "2020-06-16T13:47:06Z",
-              "status": "True",
-              "type": "PodScheduled"
-            }
-          ],
-          "containerStatuses": [
-            {
-              "containerID": "docker://f48a675fe102c49e479141dd6a0d4ba5b70b0c0378250f899970ca80153e2e76",
-              "image": "gcr.io/github-replication-sandbox/rf:1.0.9",
-              "imageID": "docker-pullable://gcr.io/github-replication-sandbox/rf@sha256:398db08c89829b8547956d359f27d508497e002a47fbc60095b3746373a8f4d2",
-              "lastState": {},
-              "name": "frontend",
-              "ready": true,
-              "restartCount": 0,
-              "state": {
-                "running": {
-                  "startedAt": "2020-06-16T13:47:07Z"
-                }
-              }
-            }
-          ],
-          "hostIP": "10.191.0.26",
-          "phase": "Running",
-          "podIP": "10.4.4.187",
-          "qosClass": "BestEffort",
-          "startTime": "2020-06-16T13:47:06Z"
-        }
-      },
-      "moniker": {
-        "app": "smoketests",
-        "cluster": "deployment smoketest-gke"
-      },
-      "name": "ddc7fbe3-afd7-11ea-bb79-4201ac10010a",
-      "providerType": "kubernetes",
-      "region": "smoketest",
-      "type": "kubernetes",
-      "uid": "ddc7fbe3-afd7-11ea-bb79-4201ac10010a",
-      "zone": "smoketest"
-    },
-    {
-      "account": "gke_github-replication-sandbox_us-central1_sandbox-us-central1-agent_smoketest-dev",
-      "accountName": "gke_github-replication-sandbox_us-central1_sandbox-us-central1-agent_smoketest-dev",
-      "cloudProvider": "kubernetes",
-      "createdTime": 1592315228000,
-      "health": [
-        {
-          "platform": "platform",
-          "source": "Pod",
-          "state": "Up",
-          "type": "kubernetes/pod"
-        },
-        {
-          "platform": "platform",
-          "source": "Container frontend",
-          "state": "Up",
-          "type": "kuberentes/container"
-        }
-      ],
-      "healthState": "Up",
-      "humanReadableName": "pod smoketest-gke-598b749779-wvrzf",
-      "key": {
-        "account": "gke_github-replication-sandbox_us-central1_sandbox-us-central1-agent_smoketest-dev",
-        "group": "pod",
-        "kubernetesKind": "pod",
-        "name": "smoketest-gke-598b749779-wvrzf",
-        "namespace": "smoketest",
-        "provider": "kubernetes"
-      },
-      "kind": "pod",
-      "labels": {
-        "app": "smoketest-gke",
-        "app.kubernetes.io/managed-by": "spinnaker",
-        "app.kubernetes.io/name": "smoketests",
-        "pod-template-hash": "598b749779"
-      },
-      "manifest": {
-        "apiVersion": "v1",
-        "kind": "Pod",
-        "metadata": {
-          "annotations": {
-            "artifact.spinnaker.io/location": "smoketest",
-            "artifact.spinnaker.io/name": "smoketest-gke",
-            "artifact.spinnaker.io/type": "kubernetes/deployment",
-            "moniker.spinnaker.io/application": "smoketests",
-            "moniker.spinnaker.io/cluster": "deployment smoketest-gke"
-          },
-          "creationTimestamp": "2020-06-16T13:47:08Z",
-          "generateName": "smoketest-gke-598b749779-",
-          "labels": {
-            "app": "smoketest-gke",
-            "app.kubernetes.io/managed-by": "spinnaker",
-            "app.kubernetes.io/name": "smoketests",
-            "pod-template-hash": "598b749779"
-          },
-          "name": "smoketest-gke-598b749779-wvrzf",
-          "namespace": "smoketest",
-          "ownerReferences": [
-            {
+            "kind": "ReplicaSet",
+            "labels": null,
+            "loadBalancers": [],
+            "manifest": {
               "apiVersion": "apps/v1",
-              "blockOwnerDeletion": true,
-              "controller": true,
               "kind": "ReplicaSet",
-              "name": "smoketest-gke-598b749779",
-              "uid": "4741c722-ab15-11ea-bb79-4201ac10010a"
-            }
-          ],
-          "resourceVersion": "60136838",
-          "selfLink": "/api/v1/namespaces/smoketest/pods/smoketest-gke-598b749779-wvrzf",
-          "uid": "df4f6d4e-afd7-11ea-bb79-4201ac10010a"
-        },
-        "spec": {
-          "containers": [
-            {
-              "image": "gcr.io/github-replication-sandbox/rf:1.0.9",
-              "imagePullPolicy": "IfNotPresent",
-              "name": "frontend",
-              "resources": {},
-              "terminationMessagePath": "/dev/termination-log",
-              "terminationMessagePolicy": "File",
-              "volumeMounts": [
-                {
-                  "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount",
-                  "name": "default-token-q67rl",
-                  "readOnly": true
+              "metadata": {
+                "annotations": {
+                  "artifact.spinnaker.io/location": "test-namespace2",
+                  "artifact.spinnaker.io/name": "test-deployment2",
+                  "artifact.spinnaker.io/type": "kubernetes/deployment",
+                  "deployment.kubernetes.io/revision": "19",
+                  "moniker.spinnaker.io/application": "test-deployment2",
+                  "moniker.spinnaker.io/cluster": "deployment test-deployment1"
+                },
+                "creationTimestamp": "2020-02-13T14:12:03Z",
+                "name": "test-rs1",
+                "namespace": "test-namespace1"
+              },
+              "spec": {
+                "replicas": 1,
+                "template": {
+                  "spec": {
+                    "containers": [
+                      {
+                        "image": "test-image3"
+                      },
+                      {
+                        "image": "test-image4"
+                      }
+                    ]
+                  }
                 }
-              ]
-            }
-          ],
-          "dnsPolicy": "ClusterFirst",
-          "enableServiceLinks": true,
-          "nodeName": "gke-sandbox-us-centr-sandbox-us-centr-2edec7cb-4z8l",
-          "priority": 0,
-          "restartPolicy": "Always",
-          "schedulerName": "default-scheduler",
-          "securityContext": {},
-          "serviceAccount": "default",
-          "serviceAccountName": "default",
-          "terminationGracePeriodSeconds": 30,
-          "tolerations": [
-            {
-              "effect": "NoExecute",
-              "key": "node.kubernetes.io/not-ready",
-              "operator": "Exists",
-              "tolerationSeconds": 300
-            },
-            {
-              "effect": "NoExecute",
-              "key": "node.kubernetes.io/unreachable",
-              "operator": "Exists",
-              "tolerationSeconds": 300
-            }
-          ],
-          "volumes": [
-            {
-              "name": "default-token-q67rl",
-              "secret": {
-                "defaultMode": 420,
-                "secretName": "default-token-q67rl"
+              },
+              "status": {
+                "readyReplicas": 0,
+                "replicas": 1
               }
-            }
-          ]
-        },
-        "status": {
-          "conditions": [
-            {
-              "lastTransitionTime": "2020-06-16T13:47:08Z",
-              "status": "True",
-              "type": "Initialized"
             },
-            {
-              "lastTransitionTime": "2020-06-16T13:47:10Z",
-              "status": "True",
-              "type": "Ready"
+            "moniker": {
+              "app": "test-deployment2",
+              "cluster": "deployment test-deployment1",
+              "sequence": 19
             },
-            {
-              "lastTransitionTime": "2020-06-16T13:47:10Z",
-              "status": "True",
-              "type": "ContainersReady"
-            },
-            {
-              "lastTransitionTime": "2020-06-16T13:47:08Z",
-              "status": "True",
-              "type": "PodScheduled"
-            }
-          ],
-          "containerStatuses": [
-            {
-              "containerID": "docker://eee7a857b1ef8593b94fe7ee686919d1bd3c750752ae50e29e2b661c051df039",
-              "image": "gcr.io/github-replication-sandbox/rf:1.0.9",
-              "imageID": "docker-pullable://gcr.io/github-replication-sandbox/rf@sha256:398db08c89829b8547956d359f27d508497e002a47fbc60095b3746373a8f4d2",
-              "lastState": {},
-              "name": "frontend",
-              "ready": true,
-              "restartCount": 0,
-              "state": {
-                "running": {
-                  "startedAt": "2020-06-16T13:47:10Z"
-                }
-              }
-            }
-          ],
-          "hostIP": "10.191.0.27",
-          "phase": "Running",
-          "podIP": "10.4.0.181",
-          "qosClass": "BestEffort",
-          "startTime": "2020-06-16T13:47:08Z"
-        }
-      },
-      "moniker": {
-        "app": "smoketests",
-        "cluster": "deployment smoketest-gke"
-      },
-      "name": "df4f6d4e-afd7-11ea-bb79-4201ac10010a",
-      "providerType": "kubernetes",
-      "region": "smoketest",
-      "type": "kubernetes",
-      "uid": "df4f6d4e-afd7-11ea-bb79-4201ac10010a",
-      "zone": "smoketest"
-    }
-  ],
-  "key": {
-    "account": "gke_github-replication-sandbox_us-central1_sandbox-us-central1-agent_smoketest-dev",
-    "group": "replicaSet",
-    "kubernetesKind": "replicaSet",
-    "name": "smoketest-gke-598b749779",
-    "namespace": "smoketest",
-    "provider": "kubernetes"
-  },
-  "kind": "replicaSet",
-  "labels": {
-    "app": "smoketest-gke",
-    "app.kubernetes.io/managed-by": "spinnaker",
-    "app.kubernetes.io/name": "smoketests",
-    "pod-template-hash": "598b749779"
-  },
-  "launchConfig": {},
-  "loadBalancers": [],
-  "manifest": {
-    "apiVersion": "extensions/v1beta1",
-    "kind": "ReplicaSet",
-    "metadata": {
-      "annotations": {
-        "artifact.spinnaker.io/location": "smoketest",
-        "artifact.spinnaker.io/name": "smoketest-gke",
-        "artifact.spinnaker.io/type": "kubernetes/deployment",
-        "deployment.kubernetes.io/desired-replicas": "2",
-        "deployment.kubernetes.io/max-replicas": "3",
-        "deployment.kubernetes.io/revision": "11",
-        "deployment.kubernetes.io/revision-history": "3,5,7,9",
-        "moniker.spinnaker.io/application": "smoketests",
-        "moniker.spinnaker.io/cluster": "deployment smoketest-gke"
-      },
-      "creationTimestamp": "2020-06-10T12:24:06Z",
-      "generation": 14,
-      "labels": {
-        "app": "smoketest-gke",
-        "app.kubernetes.io/managed-by": "spinnaker",
-        "app.kubernetes.io/name": "smoketests",
-        "pod-template-hash": "598b749779"
-      },
-      "name": "smoketest-gke-598b749779",
-      "namespace": "smoketest",
-      "ownerReferences": [
-        {
-          "apiVersion": "apps/v1",
-          "blockOwnerDeletion": true,
-          "controller": true,
-          "kind": "Deployment",
-          "name": "smoketest-gke",
-          "uid": "a3d93173-4e91-11ea-8db2-4201ac100109"
-        }
-      ],
-      "resourceVersion": "60136839",
-      "selfLink": "/apis/extensions/v1beta1/namespaces/smoketest/replicasets/smoketest-gke-598b749779",
-      "uid": "4741c722-ab15-11ea-bb79-4201ac10010a"
-    },
-    "spec": {
-      "replicas": 2,
-      "selector": {
-        "matchLabels": {
-          "app": "smoketest-gke",
-          "pod-template-hash": "598b749779"
-        }
-      },
-      "template": {
-        "metadata": {
-          "annotations": {
-            "artifact.spinnaker.io/location": "smoketest",
-            "artifact.spinnaker.io/name": "smoketest-gke",
-            "artifact.spinnaker.io/type": "kubernetes/deployment",
-            "moniker.spinnaker.io/application": "smoketests",
-            "moniker.spinnaker.io/cluster": "deployment smoketest-gke"
-          },
-          "labels": {
-            "app": "smoketest-gke",
-            "app.kubernetes.io/managed-by": "spinnaker",
-            "app.kubernetes.io/name": "smoketests",
-            "pod-template-hash": "598b749779"
-          }
-        },
-        "spec": {
-          "containers": [
-            {
-              "image": "gcr.io/github-replication-sandbox/rf:1.0.9",
-              "imagePullPolicy": "IfNotPresent",
-              "name": "frontend",
-              "resources": {},
-              "terminationMessagePath": "/dev/termination-log",
-              "terminationMessagePolicy": "File"
-            }
-          ],
-          "dnsPolicy": "ClusterFirst",
-          "restartPolicy": "Always",
-          "schedulerName": "default-scheduler",
-          "securityContext": {},
-          "terminationGracePeriodSeconds": 30
-        }
-      }
-    },
-    "status": {
-      "availableReplicas": 2,
-      "fullyLabeledReplicas": 2,
-      "observedGeneration": 14,
-      "readyReplicas": 2,
-      "replicas": 2
-    }
-  },
-  "moniker": {
-    "app": "smoketests",
-    "cluster": "deployment smoketest-gke",
-    "sequence": 11
-  },
-  "name": "replicaSet smoketest-gke-598b749779",
-  "providerType": "kubernetes",
-  "region": "smoketest",
-  "securityGroups": [],
-  "serverGroupManagers": [],
-  "type": "kubernetes",
-  "uid": "4741c722-ab15-11ea-bb79-4201ac10010a",
-  "zone": "smoketest",
-  "zones": [],
-  "insightActions": []
-}`
+            "name": "ReplicaSet test-rs1",
+            "providerType": "kubernetes",
+            "region": "test-namespace1",
+            "securityGroups": [],
+            "serverGroupManagers": [],
+            "type": "kubernetes",
+            "uid": "",
+            "zone": "test-namespace1",
+            "zones": [],
+            "insightActions": []
+          }`
 
 const payloadListApplications = `[
   {

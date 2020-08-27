@@ -41,19 +41,29 @@ var _ = Describe("Task", func() {
 			})
 		})
 
-		// When("setting the kube config returns an error", func() {
-		// 	BeforeEach(func() {
-		// 		fakeKubeClient.WithConfigReturns(errors.New("bad config"))
-		// 	})
-		//
-		// 	It("returns status internal server error", func() {
-		// 		Expect(res.StatusCode).To(Equal(http.StatusInternalServerError))
-		// 		ce := getClouddriverError()
-		// 		Expect(ce.Error).To(Equal("Internal Server Error"))
-		// 		Expect(ce.Message).To(Equal("bad config"))
-		// 		Expect(ce.Status).To(Equal(http.StatusInternalServerError))
-		// 	})
-		// })
+		When("no resources are returned", func() {
+			BeforeEach(func() {
+				fakeSQLClient.ListKubernetesResourcesByTaskIDReturns([]kubernetes.Resource{}, nil)
+			})
+
+			It("returns status internal server error", func() {
+				Expect(res.StatusCode).To(Equal(http.StatusOK))
+			})
+		})
+
+		When("setting the kube config returns an error", func() {
+			BeforeEach(func() {
+				fakeKubeClient.SetDynamicClientForConfigReturns(errors.New("bad config"))
+			})
+
+			It("returns status internal server error", func() {
+				Expect(res.StatusCode).To(Equal(http.StatusInternalServerError))
+				ce := getClouddriverError()
+				Expect(ce.Error).To(Equal("Internal Server Error"))
+				Expect(ce.Message).To(Equal("bad config"))
+				Expect(ce.Status).To(Equal(http.StatusInternalServerError))
+			})
+		})
 
 		When("getting the provider returns an error", func() {
 			BeforeEach(func() {
