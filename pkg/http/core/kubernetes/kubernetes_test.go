@@ -36,19 +36,22 @@ func setup() {
 		},
 	}, nil)
 
+	u := unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"metadata": map[string]interface{}{
+				"annotations": map[string]interface{}{
+					kubernetes.AnnotationSpinnakerArtifactName: "test-deployment",
+					kubernetes.AnnotationSpinnakerArtifactType: "kubernetes/deployment",
+					"deployment.kubernetes.io/revision":        "100",
+				},
+				"generateName": "test-",
+			},
+		},
+	}
+
 	ul := &unstructured.UnstructuredList{
 		Items: []unstructured.Unstructured{
-			{
-				Object: map[string]interface{}{
-					"metadata": map[string]interface{}{
-						"annotations": map[string]interface{}{
-							kubernetes.AnnotationSpinnakerArtifactName: "test-deployment",
-							kubernetes.AnnotationSpinnakerArtifactType: "kubernetes/deployment",
-							"deployment.kubernetes.io/revision":        "100",
-						},
-					},
-				},
-			},
+			u,
 		},
 	}
 	fakeKubeClient = &kubernetesfakes.FakeClient{}
@@ -57,6 +60,7 @@ func setup() {
 
 	fakeKubeController = &kubernetesfakes.FakeController{}
 	fakeKubeController.NewClientReturns(fakeKubeClient, nil)
+	fakeKubeController.ToUnstructuredReturns(&u, nil)
 
 	actionHandler = NewActionHandler()
 	actionConfig = newActionConfig()
@@ -144,6 +148,13 @@ func newActionConfig() ActionConfig {
 				Location:      "",
 				User:          "",
 				Account:       "",
+			},
+			RunJob: &RunJobRequest{
+				Application:   "test-application",
+				Manifest:      map[string]interface{}{},
+				CloudProvider: "kubernetes",
+				Alias:         "alias",
+				Account:       "test-account",
 			},
 		},
 	}
