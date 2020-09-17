@@ -1,11 +1,8 @@
 package core
 
 import (
-	"encoding/json"
-	"io/ioutil"
 	"log"
 	"net/http"
-	"os"
 
 	clouddriver "github.com/billiford/go-clouddriver/pkg"
 	"github.com/billiford/go-clouddriver/pkg/arcade"
@@ -27,7 +24,6 @@ import (
 // this function a bit more readable.
 func CreateKubernetesOperation(c *gin.Context) {
 	// All operations are bound to a task ID and stored in the database.
-	var err error
 	taskID := uuid.New().String()
 	ko := kubernetes.Operations{}
 	ac := arcade.Instance(c)
@@ -36,23 +32,10 @@ func CreateKubernetesOperation(c *gin.Context) {
 	sc := sql.Instance(c)
 	application := c.GetHeader("X-Spinnaker-Application")
 
-	if os.Getenv("VERBOSE_REQUEST_LOGGING") == "true" {
-		b, _ := ioutil.ReadAll(c.Request.Body)
-		log.Println("REQUEST URL:", c.Request.URL.String())
-		log.Println("REQUEST HEADERS:", c.Request.Header)
-		log.Println("REQUEST BODY:", string(b))
-
-		err := json.Unmarshal(b, &ko)
-		if err != nil {
-			clouddriver.WriteError(c, http.StatusBadRequest, err)
-			return
-		}
-	} else {
-		err := c.ShouldBindJSON(&ko)
-		if err != nil {
-			clouddriver.WriteError(c, http.StatusBadRequest, err)
-			return
-		}
+	err := c.ShouldBindJSON(&ko)
+	if err != nil {
+		clouddriver.WriteError(c, http.StatusBadRequest, err)
+		return
 	}
 
 	// Handle unknown operations.
