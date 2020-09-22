@@ -53,7 +53,7 @@ func setup() {
 	}
 	fakeKubeClient = &kubernetesfakes.FakeClient{}
 	fakeKubeClient.GetReturns(&unstructured.Unstructured{Object: map[string]interface{}{}}, nil)
-	fakeKubeClient.ListReturns(ul, nil)
+	fakeKubeClient.ListByGVRReturns(ul, nil)
 
 	fakeKubeController = &kubernetesfakes.FakeController{}
 	fakeKubeController.NewClientReturns(fakeKubeClient, nil)
@@ -144,6 +144,26 @@ func newActionConfig() ActionConfig {
 				Location:      "",
 				User:          "",
 				Account:       "",
+			},
+			PatchManifest: &PatchManifestRequest{
+				App:          "",
+				Cluster:      "",
+				Criteria:     "",
+				Kind:         "",
+				ManifestName: "deployment test-deployment",
+				Source:       "",
+				Mode:         "",
+				PatchBody: map[string]interface{}{
+					"": nil,
+				},
+				CloudProvider: "",
+				AllArtifacts:  nil,
+				Options: PatchManifestRequestOptions{
+					MergeStrategy: "",
+					Record:        false,
+				},
+				Location: "",
+				Account:  "",
 			},
 		},
 	}
