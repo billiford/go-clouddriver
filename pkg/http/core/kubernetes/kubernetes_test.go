@@ -36,7 +36,7 @@ func setup() {
 		},
 	}, nil)
 
-	u := unstructured.Unstructured{
+	fakeUnstructured := unstructured.Unstructured{
 		Object: map[string]interface{}{
 			"metadata": map[string]interface{}{
 				"annotations": map[string]interface{}{
@@ -49,18 +49,18 @@ func setup() {
 		},
 	}
 
-	ul := &unstructured.UnstructuredList{
+	fakeUnstructuredList := &unstructured.UnstructuredList{
 		Items: []unstructured.Unstructured{
-			u,
+			fakeUnstructured,
 		},
 	}
 	fakeKubeClient = &kubernetesfakes.FakeClient{}
 	fakeKubeClient.GetReturns(&unstructured.Unstructured{Object: map[string]interface{}{}}, nil)
-	fakeKubeClient.ListReturns(ul, nil)
+	fakeKubeClient.ListReturns(fakeUnstructuredList, nil)
 
 	fakeKubeController = &kubernetesfakes.FakeController{}
 	fakeKubeController.NewClientReturns(fakeKubeClient, nil)
-	fakeKubeController.ToUnstructuredReturns(&u, nil)
+	fakeKubeController.ToUnstructuredReturns(&fakeUnstructured, nil)
 
 	actionHandler = NewActionHandler()
 	actionConfig = newActionConfig()
