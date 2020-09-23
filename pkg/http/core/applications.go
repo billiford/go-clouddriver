@@ -782,10 +782,9 @@ func GetServerGroup(c *gin.Context) {
 	account := c.Param("account")
 	application := c.Param("application")
 	location := c.Param("location")
-	n := c.Param("name")
-	a := strings.Split(n, " ")
-	kind := a[0]
-	name := a[1]
+	nameArray := strings.Split(c.Param("name"), " ")
+	kind := nameArray[0]
+	name := nameArray[1]
 
 	provider, err := sc.GetKubernetesProvider(account)
 	if err != nil {
@@ -1001,10 +1000,9 @@ func GetJob(c *gin.Context) {
 	account := c.Param("account")
 	// application := c.Param("application")
 	location := c.Param("location")
-	n := c.Param("name")
-	a := strings.Split(n, " ")
-	kind := a[0]
-	name := a[1]
+	nameArray := strings.Split(c.Param("name"), " ")
+	kind := nameArray[0]
+	name := nameArray[1]
 
 	provider, err := sc.GetKubernetesProvider(account)
 	if err != nil {
