@@ -3,7 +3,6 @@ package kubernetes_test
 import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	// v1 "k8s.io/api/autoscaling/v1"
 
 	. "github.com/billiford/go-clouddriver/pkg/kubernetes"
 	"github.com/billiford/go-clouddriver/pkg/kubernetes/manifest"
