@@ -109,7 +109,11 @@ type RollingRestartManifestRequest struct {
 }
 
 type RunJobRequest struct {
-	Application string `json:"application"`
+	Account       string                 `json:"account"`
+	Alias         string                 `json:"alias"`
+	Application   string                 `json:"application"`
+	CloudProvider string                 `json:"cloudProvider"`
+	Manifest      map[string]interface{} `json:"manifest"`
 	// OptionalArtifacts []struct {
 	// 	Type       string `json:"type"`
 	// 	CustomKind bool   `json:"customKind"`
@@ -121,8 +125,6 @@ type RunJobRequest struct {
 	// 		Account string `json:"account"`
 	// 	} `json:"metadata"`
 	// } `json:"optionalArtifacts"`
-	Manifest      map[string]interface{} `json:"manifest"`
-	CloudProvider string                 `json:"cloudProvider"`
 	// PreconfiguredJobParameters []struct {
 	// 	Mapping     string `json:"mapping"`
 	// 	Name        string `json:"name"`
@@ -131,7 +133,6 @@ type RunJobRequest struct {
 	// 	Type        string `json:"type"`
 	// 	Order       int    `json:"order"`
 	// } `json:"preconfiguredJobParameters"`
-	Alias string `json:"alias"`
 	// WaitForCompletion bool   `json:"waitForCompletion"`
 	// Source            string `json:"source"`
 	// Parameters        struct {
@@ -139,6 +140,5 @@ type RunJobRequest struct {
 	// 	SOURCEREGISTRY string `json:"SOURCE_REGISTRY"`
 	// 	TARGETREGISTRY string `json:"TARGET_REGISTRY"`
 	// } `json:"parameters"`
-	Account string `json:"account"`
 	// RequiredArtifacts []interface{} `json:"requiredArtifacts"`
 }
