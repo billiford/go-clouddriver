@@ -33,6 +33,7 @@ type Client interface {
 	CreateReadPermission(clouddriver.ReadPermission) error
 	CreateWritePermission(clouddriver.WritePermission) error
 	ListKubernetesProviders() ([]kubernetes.Provider, error)
+	ListKubernetesResourcesByAccountNameAndKind(string, string) ([]kubernetes.Resource, error)
 	ListKubernetesResourcesByFields(...string) ([]kubernetes.Resource, error)
 	ListKubernetesResourcesByTaskID(string) ([]kubernetes.Resource, error)
 	ListKubernetesAccountsBySpinnakerApp(string) ([]string, error)
@@ -128,6 +129,19 @@ func (c *client) ListKubernetesProviders() ([]kubernetes.Provider, error) {
 	db := c.db.Select("name, host, ca_data").Find(&ps)
 
 	return ps, db.Error
+}
+
+func (c *client) ListKubernetesClustersByAccountNameAndKind(accountName, kind string) ([]string, error) {
+	var rs []kubernetes.Resource
+	db := c.db.Select("cluster").
+		Where("account_name = ? AND kind = ?", accountName, kind).Find(&rs)
+
+	clusters := []string{}
+	for _, resource := range rs {
+		clusters = append(clusters, resource.Cluster)
+	}
+
+	return clusters, db.Error
 }
 
 func (c *client) ListKubernetesResourcesByTaskID(taskID string) ([]kubernetes.Resource, error) {

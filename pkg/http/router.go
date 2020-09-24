@@ -37,9 +37,11 @@ func Initialize(r *gin.Engine) {
 		// Get results for a task triggered in CreateKubernetesOperation.
 		r.GET("/task/:id", core.GetTask)
 
+		// Generic search endpoint.
+		r.GET("/search", core.Search)
+
 		// Not implemented.
 		r.GET("/securityGroups", core.ListSecurityGroups)
-		r.GET("/search", core.Search)
 
 		// Artifacts controller.
 		r.GET("/artifacts/credentials", core.ListArtifactCredentials)
