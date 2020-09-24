@@ -482,12 +482,14 @@ func ListClusters(c *gin.Context) {
 	response := Clusters{}
 
 	for _, resource := range rs {
-		if _, ok := response[resource.AccountName]; !ok {
-			response[resource.AccountName] = []string{}
+		if resource.Cluster != "" {
+			if _, ok := response[resource.AccountName]; !ok {
+				response[resource.AccountName] = []string{}
+			}
+			kr := response[resource.AccountName]
+			kr = append(kr, resource.Cluster)
+			response[resource.AccountName] = kr
 		}
-		kr := response[resource.AccountName]
-		kr = append(kr, resource.Cluster)
-		response[resource.AccountName] = kr
 	}
 
 	c.JSON(http.StatusOK, response)

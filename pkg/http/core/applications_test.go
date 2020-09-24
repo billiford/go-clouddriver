@@ -475,7 +475,7 @@ var _ = Describe("Application", func() {
 			doRequest()
 		})
 
-		When("listing resources by fields returns an error", func() {
+		When("listing clusters returns an error", func() {
 			BeforeEach(func() {
 				fakeSQLClient.ListKubernetesClustersByApplicationReturns(nil, errors.New("error listing clusters"))
 			})
@@ -486,6 +486,30 @@ var _ = Describe("Application", func() {
 				Expect(ce.Error).To(Equal("Internal Server Error"))
 				Expect(ce.Message).To(Equal("error listing clusters"))
 				Expect(ce.Status).To(Equal(http.StatusInternalServerError))
+			})
+		})
+
+		When("there is an empty cluster", func() {
+			BeforeEach(func() {
+				fakeSQLClient.ListKubernetesClustersByApplicationReturns([]kubernetes.Resource{
+					{
+						AccountName: "test-account1",
+						Cluster:     "test-kind1 test-name1",
+					},
+					{
+						AccountName: "test-account2",
+						Cluster:     "",
+					},
+					{
+						AccountName: "test-account2",
+						Cluster:     "test-kind3 test-name3",
+					},
+				}, nil)
+			})
+
+			It("is omitted in the response", func() {
+				Expect(res.StatusCode).To(Equal(http.StatusOK))
+				validateResponse(payloadListClusters2)
 			})
 		})
 
