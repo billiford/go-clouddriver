@@ -2,6 +2,8 @@ package kubernetes
 
 import (
 	"encoding/base64"
+	"fmt"
+	"unicode"
 
 	"github.com/billiford/go-clouddriver/pkg/arcade"
 	"github.com/billiford/go-clouddriver/pkg/kubernetes"
@@ -63,6 +65,8 @@ func (d *deployManfest) Run() error {
 			return err
 		}
 
+		name := u.GetName()
+
 		err = d.kc.AddSpinnakerAnnotations(u, d.dm.Moniker.App)
 		if err != nil {
 			return err
@@ -89,6 +93,7 @@ func (d *deployManfest) Run() error {
 			Version:      meta.Version,
 			Kind:         meta.Kind,
 			SpinnakerApp: d.dm.Moniker.App,
+			Cluster:      fmt.Sprintf("%s %s", lowercaseFirst(meta.Kind), name),
 		}
 
 		err = d.sc.CreateKubernetesResource(kr)
@@ -98,4 +103,11 @@ func (d *deployManfest) Run() error {
 	}
 
 	return nil
+}
+
+func lowercaseFirst(str string) string {
+	for i, v := range str {
+		return string(unicode.ToLower(v)) + str[i+1:]
+	}
+	return ""
 }
