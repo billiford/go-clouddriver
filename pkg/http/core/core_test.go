@@ -88,6 +88,7 @@ func setup() {
 	fakeKubeActionHandler.NewScaleManifestActionReturns(fakeAction)
 	fakeKubeActionHandler.NewRollingRestartActionReturns(fakeAction)
 	fakeKubeActionHandler.NewRollbackActionReturns(fakeAction)
+	fakeKubeActionHandler.NewRunJobActionReturns(fakeAction)
 
 	fakeArcadeClient = &arcadefakes.FakeClient{}
 

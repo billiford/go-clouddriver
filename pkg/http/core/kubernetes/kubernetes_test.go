@@ -36,27 +36,31 @@ func setup() {
 		},
 	}, nil)
 
-	ul := &unstructured.UnstructuredList{
-		Items: []unstructured.Unstructured{
-			{
-				Object: map[string]interface{}{
-					"metadata": map[string]interface{}{
-						"annotations": map[string]interface{}{
-							kubernetes.AnnotationSpinnakerArtifactName: "test-deployment",
-							kubernetes.AnnotationSpinnakerArtifactType: "kubernetes/deployment",
-							"deployment.kubernetes.io/revision":        "100",
-						},
-					},
+	fakeUnstructured := unstructured.Unstructured{
+		Object: map[string]interface{}{
+			"metadata": map[string]interface{}{
+				"annotations": map[string]interface{}{
+					kubernetes.AnnotationSpinnakerArtifactName: "test-deployment",
+					kubernetes.AnnotationSpinnakerArtifactType: "kubernetes/deployment",
+					"deployment.kubernetes.io/revision":        "100",
 				},
+				"generateName": "test-",
 			},
+		},
+	}
+
+	fakeUnstructuredList := &unstructured.UnstructuredList{
+		Items: []unstructured.Unstructured{
+			fakeUnstructured,
 		},
 	}
 	fakeKubeClient = &kubernetesfakes.FakeClient{}
 	fakeKubeClient.GetReturns(&unstructured.Unstructured{Object: map[string]interface{}{}}, nil)
-	fakeKubeClient.ListByGVRReturns(ul, nil)
+	fakeKubeClient.ListByGVRReturns(fakeUnstructuredList, nil)
 
 	fakeKubeController = &kubernetesfakes.FakeController{}
 	fakeKubeController.NewClientReturns(fakeKubeClient, nil)
+	fakeKubeController.ToUnstructuredReturns(&fakeUnstructured, nil)
 
 	actionHandler = NewActionHandler()
 	actionConfig = newActionConfig()
@@ -95,6 +99,13 @@ func newActionConfig() ActionConfig {
 			},
 			PatchManifest: &PatchManifestRequest{
 				ManifestName: "deployment test-deployment",
+			},
+			RunJob: &RunJobRequest{
+				Application:   "test-application",
+				Manifest:      map[string]interface{}{},
+				CloudProvider: "kubernetes",
+				Alias:         "alias",
+				Account:       "test-account",
 			},
 		},
 	}

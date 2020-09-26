@@ -27,6 +27,7 @@ func Initialize(r *gin.Engine) {
 		api.GET("/applications/:application/serverGroups/:account/:location/:name", core.GetServerGroup)
 		api.GET("/applications/:application/loadBalancers", core.ListLoadBalancers)
 		api.GET("/applications/:application/clusters", core.ListClusters)
+		api.GET("/applications/:application/jobs/:account/:location/:name", core.GetJob)
 
 		// Create a kubernetes operation - deploy/delete/scale manifest.
 		api.POST("/kubernetes/ops", core.CreateKubernetesOperation)
@@ -47,6 +48,9 @@ func Initialize(r *gin.Engine) {
 		api.GET("/artifacts/account/:accountName/names", core.ListHelmArtifactAccountNames)
 		api.GET("/artifacts/account/:accountName/versions", core.ListHelmArtifactAccountVersions)
 		api.PUT("/artifacts/fetch/", core.GetArtifact)
+
+		// Features.
+		api.GET("/features/stages", core.ListStages)
 	}
 
 	// New endpoint.
