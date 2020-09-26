@@ -232,7 +232,7 @@ var _ = Describe("Credential", func() {
 
 				It("continues", func() {
 					Expect(res.StatusCode).To(Equal(http.StatusOK))
-					Expect(fakeKubeClient.ListCallCount()).To(Equal(2))
+					Expect(fakeKubeClient.ListByGVRCallCount()).To(Equal(2))
 					validateResponse(payloadCredentialsExpandTrueNoNamespaces)
 				})
 			})
