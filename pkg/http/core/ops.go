@@ -24,8 +24,8 @@ import (
 // this function a bit more readable.
 func CreateKubernetesOperation(c *gin.Context) {
 	// All operations are bound to a task ID and stored in the database.
-	taskID := uuid.New().String()
 	ko := kubernetes.Operations{}
+	taskID := uuid.New().String()
 	ac := arcade.Instance(c)
 	ah := kubernetes.ActionHandlerInstance(c)
 	kc := kube.ControllerInstance(c)
@@ -38,11 +38,7 @@ func CreateKubernetesOperation(c *gin.Context) {
 		return
 	}
 
-	// Spinnaker likes to send an 'extra' POST request to /kubernetes/ops -
-	// I have not figured out what these requests are yet. I'll need to unmarshal
-	// into a map[string]interface{} in order to read all the fields being sent.
-	//
-	// For now, I return status OK for this task - so far so good!
+	// Handle unknown operations.
 	if len(ko) == 0 {
 		or := kubernetes.OperationsResponse{
 			ID:          taskID,
@@ -92,8 +88,24 @@ func CreateKubernetesOperation(c *gin.Context) {
 			}
 		}
 
+		if req.RunJob != nil {
+			err = ah.NewRunJobAction(config).Run()
+			if err != nil {
+				clouddriver.WriteError(c, http.StatusInternalServerError, err)
+				return
+			}
+		}
+
 		if req.UndoRolloutManifest != nil {
 			err = ah.NewRollbackAction(config).Run()
+			if err != nil {
+				clouddriver.WriteError(c, http.StatusInternalServerError, err)
+				return
+			}
+		}
+
+		if req.PatchManifest != nil {
+			err = ah.NewPatchManifestAction(config).Run()
 			if err != nil {
 				clouddriver.WriteError(c, http.StatusInternalServerError, err)
 				return
