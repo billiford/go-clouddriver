@@ -19,6 +19,17 @@ type FakeActionHandler struct {
 	newDeployManifestActionReturnsOnCall map[int]struct {
 		result1 kubernetes.Action
 	}
+	NewPatchManifestActionStub        func(kubernetes.ActionConfig) kubernetes.Action
+	newPatchManifestActionMutex       sync.RWMutex
+	newPatchManifestActionArgsForCall []struct {
+		arg1 kubernetes.ActionConfig
+	}
+	newPatchManifestActionReturns struct {
+		result1 kubernetes.Action
+	}
+	newPatchManifestActionReturnsOnCall map[int]struct {
+		result1 kubernetes.Action
+	}
 	NewRollbackActionStub        func(kubernetes.ActionConfig) kubernetes.Action
 	newRollbackActionMutex       sync.RWMutex
 	newRollbackActionArgsForCall []struct {
@@ -123,6 +134,66 @@ func (fake *FakeActionHandler) NewDeployManifestActionReturnsOnCall(i int, resul
 		})
 	}
 	fake.newDeployManifestActionReturnsOnCall[i] = struct {
+		result1 kubernetes.Action
+	}{result1}
+}
+
+func (fake *FakeActionHandler) NewPatchManifestAction(arg1 kubernetes.ActionConfig) kubernetes.Action {
+	fake.newPatchManifestActionMutex.Lock()
+	ret, specificReturn := fake.newPatchManifestActionReturnsOnCall[len(fake.newPatchManifestActionArgsForCall)]
+	fake.newPatchManifestActionArgsForCall = append(fake.newPatchManifestActionArgsForCall, struct {
+		arg1 kubernetes.ActionConfig
+	}{arg1})
+	fake.recordInvocation("NewPatchManifestAction", []interface{}{arg1})
+	fake.newPatchManifestActionMutex.Unlock()
+	if fake.NewPatchManifestActionStub != nil {
+		return fake.NewPatchManifestActionStub(arg1)
+	}
+	if specificReturn {
+		return ret.result1
+	}
+	fakeReturns := fake.newPatchManifestActionReturns
+	return fakeReturns.result1
+}
+
+func (fake *FakeActionHandler) NewPatchManifestActionCallCount() int {
+	fake.newPatchManifestActionMutex.RLock()
+	defer fake.newPatchManifestActionMutex.RUnlock()
+	return len(fake.newPatchManifestActionArgsForCall)
+}
+
+func (fake *FakeActionHandler) NewPatchManifestActionCalls(stub func(kubernetes.ActionConfig) kubernetes.Action) {
+	fake.newPatchManifestActionMutex.Lock()
+	defer fake.newPatchManifestActionMutex.Unlock()
+	fake.NewPatchManifestActionStub = stub
+}
+
+func (fake *FakeActionHandler) NewPatchManifestActionArgsForCall(i int) kubernetes.ActionConfig {
+	fake.newPatchManifestActionMutex.RLock()
+	defer fake.newPatchManifestActionMutex.RUnlock()
+	argsForCall := fake.newPatchManifestActionArgsForCall[i]
+	return argsForCall.arg1
+}
+
+func (fake *FakeActionHandler) NewPatchManifestActionReturns(result1 kubernetes.Action) {
+	fake.newPatchManifestActionMutex.Lock()
+	defer fake.newPatchManifestActionMutex.Unlock()
+	fake.NewPatchManifestActionStub = nil
+	fake.newPatchManifestActionReturns = struct {
+		result1 kubernetes.Action
+	}{result1}
+}
+
+func (fake *FakeActionHandler) NewPatchManifestActionReturnsOnCall(i int, result1 kubernetes.Action) {
+	fake.newPatchManifestActionMutex.Lock()
+	defer fake.newPatchManifestActionMutex.Unlock()
+	fake.NewPatchManifestActionStub = nil
+	if fake.newPatchManifestActionReturnsOnCall == nil {
+		fake.newPatchManifestActionReturnsOnCall = make(map[int]struct {
+			result1 kubernetes.Action
+		})
+	}
+	fake.newPatchManifestActionReturnsOnCall[i] = struct {
 		result1 kubernetes.Action
 	}{result1}
 }
@@ -372,6 +443,8 @@ func (fake *FakeActionHandler) Invocations() map[string][][]interface{} {
 	defer fake.invocationsMutex.RUnlock()
 	fake.newDeployManifestActionMutex.RLock()
 	defer fake.newDeployManifestActionMutex.RUnlock()
+	fake.newPatchManifestActionMutex.RLock()
+	defer fake.newPatchManifestActionMutex.RUnlock()
 	fake.newRollbackActionMutex.RLock()
 	defer fake.newRollbackActionMutex.RUnlock()
 	fake.newRollingRestartActionMutex.RLock()
