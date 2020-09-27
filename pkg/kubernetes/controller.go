@@ -4,7 +4,6 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/billiford/go-clouddriver/pkg/kubernetes/cached/disk"
@@ -63,22 +62,13 @@ const (
 )
 
 var (
-	clientCache map[string]*client
-	mux         sync.Mutex
-	ttl         = 10 * time.Minute
+	ttl = 10 * time.Minute
 )
 
 // Stores clients in a map using an underlying disk cache directory.
 // This should eliminate the need to constantly use discovery on the
 // Kubernetes host, decreases requests.
 func (c *controller) ClientForConfig(config *rest.Config) (Client, error) {
-	mux.Lock()
-	defer mux.Unlock()
-
-	if _, ok := clientCache[config.Host]; ok {
-		return clientCache[config.Host], nil
-	}
-
 	dynamicClient, err := dynamic.NewForConfig(config)
 	if err != nil {
 		return nil, err
@@ -102,8 +92,6 @@ func (c *controller) ClientForConfig(config *rest.Config) (Client, error) {
 		config: config,
 		mapper: mapper,
 	}
-
-	clientCache[config.Host] = kubeClient
 
 	return kubeClient, nil
 }
