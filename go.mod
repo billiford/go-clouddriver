@@ -7,6 +7,7 @@ require (
 	github.com/docker/docker-credential-helpers v0.6.3
 	github.com/fatih/color v1.9.0
 	github.com/gin-gonic/gin v1.6.3
+	github.com/go-playground/assert/v2 v2.0.1
 	github.com/go-sql-driver/mysql v1.5.0
 	github.com/golang/gddo v0.0.0-20200715224205-051695c33a3f
 	github.com/google/uuid v1.1.1

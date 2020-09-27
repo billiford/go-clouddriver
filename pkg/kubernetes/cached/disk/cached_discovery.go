@@ -36,9 +36,23 @@ import (
 	restclient "k8s.io/client-go/rest"
 )
 
+type CachedDiscoveryClient interface {
+	ServerResourcesForGroupVersion(string) (*metav1.APIResourceList, error)
+	ServerResources() ([]*metav1.APIResourceList, error)
+	ServerGroupsAndResources() ([]*metav1.APIGroup, []*metav1.APIResourceList, error)
+	ServerGroups() (*metav1.APIGroupList, error)
+	RESTClient() restclient.Interface
+	ServerPreferredResources() ([]*metav1.APIResourceList, error)
+	ServerPreferredNamespacedResources() ([]*metav1.APIResourceList, error)
+	ServerVersion() (*version.Info, error)
+	OpenAPISchema() (*openapi_v2.Document, error)
+	Fresh() bool
+	Invalidate()
+}
+
 // CachedDiscoveryClient implements the functions that discovery server-supported API groups,
 // versions and resources.
-type CachedDiscoveryClient struct {
+type cachedDiscoveryClient struct {
 	delegate discovery.DiscoveryInterface
 
 	// cacheDirectory is the directory where discovery docs are held.  It must be unique per host:port combination to work well.
@@ -58,10 +72,10 @@ type CachedDiscoveryClient struct {
 	fresh bool
 }
 
-var _ discovery.CachedDiscoveryInterface = &CachedDiscoveryClient{}
+var _ discovery.CachedDiscoveryInterface = &cachedDiscoveryClient{}
 
 // ServerResourcesForGroupVersion returns the supported resources for a group and version.
-func (d *CachedDiscoveryClient) ServerResourcesForGroupVersion(groupVersion string) (*metav1.APIResourceList, error) {
+func (d *cachedDiscoveryClient) ServerResourcesForGroupVersion(groupVersion string) (*metav1.APIResourceList, error) {
 	filename := filepath.Join(d.cacheDirectory, groupVersion, "serverresources.json")
 	cachedBytes, err := d.getCachedFile(filename)
 	// don't fail on errors, we either don't have a file or won't be able to run the cached check. Either way we can fallback.
@@ -94,19 +108,19 @@ func (d *CachedDiscoveryClient) ServerResourcesForGroupVersion(groupVersion stri
 
 // ServerResources returns the supported resources for all groups and versions.
 // Deprecated: use ServerGroupsAndResources instead.
-func (d *CachedDiscoveryClient) ServerResources() ([]*metav1.APIResourceList, error) {
+func (d *cachedDiscoveryClient) ServerResources() ([]*metav1.APIResourceList, error) {
 	_, rs, err := discovery.ServerGroupsAndResources(d)
 	return rs, err
 }
 
 // ServerGroupsAndResources returns the supported groups and resources for all groups and versions.
-func (d *CachedDiscoveryClient) ServerGroupsAndResources() ([]*metav1.APIGroup, []*metav1.APIResourceList, error) {
+func (d *cachedDiscoveryClient) ServerGroupsAndResources() ([]*metav1.APIGroup, []*metav1.APIResourceList, error) {
 	return discovery.ServerGroupsAndResources(d)
 }
 
 // ServerGroups returns the supported groups, with information like supported versions and the
 // preferred version.
-func (d *CachedDiscoveryClient) ServerGroups() (*metav1.APIGroupList, error) {
+func (d *cachedDiscoveryClient) ServerGroups() (*metav1.APIGroupList, error) {
 	filename := filepath.Join(d.cacheDirectory, "servergroups.json")
 	cachedBytes, err := d.getCachedFile(filename)
 	// don't fail on errors, we either don't have a file or won't be able to run the cached check. Either way we can fallback.
@@ -135,7 +149,7 @@ func (d *CachedDiscoveryClient) ServerGroups() (*metav1.APIGroupList, error) {
 	return liveGroups, nil
 }
 
-func (d *CachedDiscoveryClient) getCachedFile(filename string) ([]byte, error) {
+func (d *cachedDiscoveryClient) getCachedFile(filename string) ([]byte, error) {
 	// after invalidation ignore cache files not created by this process
 	d.mutex.Lock()
 	_, ourFile := d.ourFiles[filename]
@@ -173,7 +187,7 @@ func (d *CachedDiscoveryClient) getCachedFile(filename string) ([]byte, error) {
 	return cachedBytes, nil
 }
 
-func (d *CachedDiscoveryClient) writeCachedFile(filename string, obj runtime.Object) error {
+func (d *cachedDiscoveryClient) writeCachedFile(filename string, obj runtime.Object) error {
 	if err := os.MkdirAll(filepath.Dir(filename), 0750); err != nil {
 		return err
 	}
@@ -216,35 +230,35 @@ func (d *CachedDiscoveryClient) writeCachedFile(filename string, obj runtime.Obj
 
 // RESTClient returns a RESTClient that is used to communicate with API server
 // by this client implementation.
-func (d *CachedDiscoveryClient) RESTClient() restclient.Interface {
+func (d *cachedDiscoveryClient) RESTClient() restclient.Interface {
 	return d.delegate.RESTClient()
 }
 
 // ServerPreferredResources returns the supported resources with the version preferred by the
 // server.
-func (d *CachedDiscoveryClient) ServerPreferredResources() ([]*metav1.APIResourceList, error) {
+func (d *cachedDiscoveryClient) ServerPreferredResources() ([]*metav1.APIResourceList, error) {
 	return discovery.ServerPreferredResources(d)
 }
 
 // ServerPreferredNamespacedResources returns the supported namespaced resources with the
 // version preferred by the server.
-func (d *CachedDiscoveryClient) ServerPreferredNamespacedResources() ([]*metav1.APIResourceList, error) {
+func (d *cachedDiscoveryClient) ServerPreferredNamespacedResources() ([]*metav1.APIResourceList, error) {
 	return discovery.ServerPreferredNamespacedResources(d)
 }
 
 // ServerVersion retrieves and parses the server's version (git version).
-func (d *CachedDiscoveryClient) ServerVersion() (*version.Info, error) {
+func (d *cachedDiscoveryClient) ServerVersion() (*version.Info, error) {
 	return d.delegate.ServerVersion()
 }
 
 // OpenAPISchema retrieves and parses the swagger API schema the server supports.
-func (d *CachedDiscoveryClient) OpenAPISchema() (*openapi_v2.Document, error) {
+func (d *cachedDiscoveryClient) OpenAPISchema() (*openapi_v2.Document, error) {
 	return d.delegate.OpenAPISchema()
 }
 
 // Fresh is supposed to tell the caller whether or not to retry if the cache
 // fails to find something (false = retry, true = no need to retry).
-func (d *CachedDiscoveryClient) Fresh() bool {
+func (d *cachedDiscoveryClient) Fresh() bool {
 	d.mutex.Lock()
 	defer d.mutex.Unlock()
 
@@ -252,7 +266,7 @@ func (d *CachedDiscoveryClient) Fresh() bool {
 }
 
 // Invalidate enforces that no cached data is used in the future that is older than the current time.
-func (d *CachedDiscoveryClient) Invalidate() {
+func (d *cachedDiscoveryClient) Invalidate() {
 	d.mutex.Lock()
 	defer d.mutex.Unlock()
 
@@ -270,7 +284,7 @@ func (d *CachedDiscoveryClient) Invalidate() {
 // CachedDiscoveryClient cache data. If httpCacheDir is empty, the restconfig's transport will not
 // be updated with a roundtripper that understands cache responses.
 // If discoveryCacheDir is empty, cached server resource data will be looked up in the current directory.
-func NewCachedDiscoveryClientForConfig(config *restclient.Config, discoveryCacheDir, httpCacheDir string, ttl time.Duration) (*CachedDiscoveryClient, error) {
+func NewCachedDiscoveryClientForConfig(config *restclient.Config, discoveryCacheDir, httpCacheDir string, ttl time.Duration) (CachedDiscoveryClient, error) {
 	if len(httpCacheDir) > 0 {
 		// update the given restconfig with a custom roundtripper that
 		// understands how to handle cache responses.
@@ -288,9 +302,13 @@ func NewCachedDiscoveryClientForConfig(config *restclient.Config, discoveryCache
 	return newCachedDiscoveryClient(discoveryClient, discoveryCacheDir, ttl), nil
 }
 
+func NewCachedDiscoveryClient(delegate discovery.DiscoveryInterface, cacheDirectory string, ttl time.Duration) CachedDiscoveryClient {
+	return newCachedDiscoveryClient(delegate, cacheDirectory, ttl)
+}
+
 // NewCachedDiscoveryClient creates a new DiscoveryClient.  cacheDirectory is the directory where discovery docs are held.  It must be unique per host:port combination to work well.
-func newCachedDiscoveryClient(delegate discovery.DiscoveryInterface, cacheDirectory string, ttl time.Duration) *CachedDiscoveryClient {
-	return &CachedDiscoveryClient{
+func newCachedDiscoveryClient(delegate discovery.DiscoveryInterface, cacheDirectory string, ttl time.Duration) CachedDiscoveryClient {
+	return &cachedDiscoveryClient{
 		delegate:       delegate,
 		cacheDirectory: cacheDirectory,
 		ttl:            ttl,

@@ -27,8 +27,18 @@ import (
 	"k8s.io/klog/v2"
 )
 
+//go:generate counterfeiter . CacheRoundTripper
+type CacheRoundTripper interface {
+	RoundTrip(req *http.Request) (*http.Response, error)
+	CancelRequest(req *http.Request)
+}
+
 type cacheRoundTripper struct {
 	rt *httpcache.Transport
+}
+
+func NewCacheRoundTripper(cachDir string, rt http.RoundTripper) http.RoundTripper {
+	return newCacheRoundTripper(cachDir, rt)
 }
 
 // newCacheRoundTripper creates a roundtripper that reads the ETag on

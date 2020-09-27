@@ -14,17 +14,20 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package disk
+package disk_test
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"testing"
 	"time"
 
+	. "github.com/billiford/go-clouddriver/pkg/kubernetes/cached/disk"
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
+
 	openapi_v2 "github.com/googleapis/gnostic/openapiv2"
-	"github.com/stretchr/testify/assert"
 
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -35,93 +38,197 @@ import (
 	"k8s.io/client-go/rest/fake"
 )
 
-func TestCachedDiscoveryClient_Fresh(t *testing.T) {
-	assert := assert.New(t)
+var _ = Describe("CachedDiscovery", func() {
+	var (
+		d   string
+		err error
+		c   *fakeDiscoveryClient
+		cdc CachedDiscoveryClient
+	)
 
-	d, err := ioutil.TempDir("", "")
-	assert.NoError(err)
-	defer os.RemoveAll(d)
+	Describe("#Fresh", func() {
+		BeforeEach(func() {
+			d, err = ioutil.TempDir("", "")
+			Expect(err).To(BeNil())
+			c = &fakeDiscoveryClient{}
+			cdc = NewCachedDiscoveryClient(c, d, 60*time.Second)
+		})
 
-	c := fakeDiscoveryClient{}
-	cdc := newCachedDiscoveryClient(&c, d, 60*time.Second)
-	assert.True(cdc.Fresh(), "should be fresh after creation")
+		JustBeforeEach(func() {
+		})
 
-	cdc.ServerGroups()
-	assert.True(cdc.Fresh(), "should be fresh after groups call without cache")
-	assert.Equal(c.groupCalls, 1)
+		AfterEach(func() {
+			os.RemoveAll(d)
+		})
 
-	cdc.ServerGroups()
-	assert.True(cdc.Fresh(), "should be fresh after another groups call")
-	assert.Equal(c.groupCalls, 1)
+		When("the client is created", func() {
+			It("should be fresh", func() {
+				Expect(cdc.Fresh()).To(BeTrue())
+			})
+		})
 
-	cdc.ServerResources()
-	assert.True(cdc.Fresh(), "should be fresh after resources call")
-	assert.Equal(c.resourceCalls, 1)
+		When("server groups is called", func() {
+			BeforeEach(func() {
+				_, err = cdc.ServerGroups()
+				Expect(err).To(BeNil())
+			})
 
-	cdc.ServerResources()
-	assert.True(cdc.Fresh(), "should be fresh after another resources call")
-	assert.Equal(c.resourceCalls, 1)
+			It("should be fresh", func() {
+				Expect(cdc.Fresh()).To(BeTrue())
+				Expect(c.groupCalls).To(Equal(1))
+			})
+		})
 
-	cdc = newCachedDiscoveryClient(&c, d, 60*time.Second)
-	cdc.ServerGroups()
-	assert.False(cdc.Fresh(), "should NOT be fresh after recreation with existing groups cache")
-	assert.Equal(c.groupCalls, 1)
+		When("server groups is called twice", func() {
+			BeforeEach(func() {
+				cdc.ServerGroups()
+				cdc.ServerGroups()
+			})
 
-	cdc.ServerResources()
-	assert.False(cdc.Fresh(), "should NOT be fresh after recreation with existing resources cache")
-	assert.Equal(c.resourceCalls, 1)
+			It("should be fresh", func() {
+				Expect(cdc.Fresh()).To(BeTrue())
+				Expect(c.groupCalls).To(Equal(1))
+			})
+		})
 
-	cdc.Invalidate()
-	assert.True(cdc.Fresh(), "should be fresh after cache invalidation")
+		When("resources is called", func() {
+			BeforeEach(func() {
+				cdc.ServerResources()
+			})
 
-	cdc.ServerResources()
-	assert.True(cdc.Fresh(), "should ignore existing resources cache after invalidation")
-	assert.Equal(c.resourceCalls, 2)
-}
+			It("should be fresh", func() {
+				Expect(cdc.Fresh()).To(BeTrue())
+				Expect(c.resourceCalls).To(Equal(1))
+			})
+		})
 
-func TestNewCachedDiscoveryClient_TTL(t *testing.T) {
-	assert := assert.New(t)
+		When("resources is called twice", func() {
+			BeforeEach(func() {
+				cdc.ServerResources()
+				cdc.ServerResources()
+			})
 
-	d, err := ioutil.TempDir("", "")
-	assert.NoError(err)
-	defer os.RemoveAll(d)
+			It("should be fresh", func() {
+				Expect(cdc.Fresh()).To(BeTrue())
+				Expect(c.resourceCalls).To(Equal(1))
+			})
+		})
 
-	c := fakeDiscoveryClient{}
-	cdc := newCachedDiscoveryClient(&c, d, 1*time.Nanosecond)
-	cdc.ServerGroups()
-	assert.Equal(c.groupCalls, 1)
+		Context("client is recreated", func() {
+			BeforeEach(func() {
+				cdc.ServerGroups()
+				cdc.ServerResources()
+				cdc = NewCachedDiscoveryClient(c, d, 60*time.Second)
+			})
 
-	time.Sleep(1 * time.Second)
+			When("server groups is called", func() {
+				BeforeEach(func() {
+					cdc.ServerGroups()
+				})
 
-	cdc.ServerGroups()
-	assert.Equal(c.groupCalls, 2)
-}
+				It("should not be fresh", func() {
+					Expect(cdc.Fresh()).To(BeFalse())
+					Expect(c.groupCalls).To(Equal(1))
+				})
+			})
 
-func TestNewCachedDiscoveryClient_PathPerm(t *testing.T) {
-	assert := assert.New(t)
+			When("resources is called", func() {
+				BeforeEach(func() {
+					cdc.ServerResources()
+				})
 
-	d, err := ioutil.TempDir("", "")
-	assert.NoError(err)
-	os.RemoveAll(d)
-	defer os.RemoveAll(d)
+				It("should not be fresh", func() {
+					Expect(cdc.Fresh()).To(BeFalse())
+					Expect(c.resourceCalls).To(Equal(1))
+				})
+			})
 
-	c := fakeDiscoveryClient{}
-	cdc := newCachedDiscoveryClient(&c, d, 1*time.Nanosecond)
-	cdc.ServerGroups()
+			When("invalidate is called", func() {
+				BeforeEach(func() {
+					cdc.Invalidate()
+				})
 
-	err = filepath.Walk(d, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-		if info.IsDir() {
-			assert.Equal(os.FileMode(0750), info.Mode().Perm())
-		} else {
-			assert.Equal(os.FileMode(0660), info.Mode().Perm())
-		}
-		return nil
+				It("should be fresh", func() {
+					Expect(cdc.Fresh()).To(BeTrue())
+				})
+
+				It("should ignore existing resources cached after validation", func() {
+					Expect(cdc.Fresh()).To(BeTrue())
+					Expect(c.resourceCalls).To(Equal(1))
+				})
+
+				It("should ignore existing resources cache after invalidation", func() {
+					cdc.ServerResources()
+					Expect(cdc.Fresh()).To(BeTrue())
+					Expect(c.resourceCalls).To(Equal(2))
+				})
+			})
+		})
 	})
-	assert.NoError(err)
-}
+
+	Describe("#TTL", func() {
+		BeforeEach(func() {
+			d, err = ioutil.TempDir("", "")
+			Expect(err).To(BeNil())
+			c = &fakeDiscoveryClient{}
+			cdc = NewCachedDiscoveryClient(c, d, 1*time.Nanosecond)
+		})
+
+		JustBeforeEach(func() {
+		})
+
+		AfterEach(func() {
+			os.RemoveAll(d)
+		})
+
+		It("respects the ttl", func() {
+			cdc.ServerGroups()
+			Expect(c.groupCalls).To(Equal(1))
+			time.Sleep(1 * time.Second)
+			cdc.ServerGroups()
+			Expect(c.groupCalls).To(Equal(2))
+		})
+	})
+
+	Describe("#PathPerm", func() {
+		BeforeEach(func() {
+			d, err = ioutil.TempDir("", "")
+			Expect(err).To(BeNil())
+			os.RemoveAll(d)
+			c = &fakeDiscoveryClient{}
+			cdc = NewCachedDiscoveryClient(c, d, 1*time.Nanosecond)
+			cdc.ServerGroups()
+		})
+
+		JustBeforeEach(func() {
+		})
+
+		AfterEach(func() {
+			os.RemoveAll(d)
+		})
+
+		When("it succeeds", func() {
+			It("creates the cache directories and files with the correct permissions", func() {
+				err = filepath.Walk(d, func(path string, info os.FileInfo, err error) error {
+					if err != nil {
+						return err
+					}
+					if info.IsDir() {
+						if info.Mode().Perm() != os.FileMode(0750) {
+							return fmt.Errorf("directory perm incorrect expected %d got %d", os.FileMode(0750), info.Mode().Perm())
+						}
+					} else {
+						if info.Mode().Perm() != os.FileMode(0660) {
+							return fmt.Errorf("file perm incorrect expected %d got %d", os.FileMode(0660), info.Mode().Perm())
+						}
+					}
+					return nil
+				})
+				Expect(err).To(BeNil())
+			})
+		})
+	})
+})
 
 type fakeDiscoveryClient struct {
 	groupCalls    int
