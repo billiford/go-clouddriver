@@ -88,8 +88,8 @@ var _ = Describe("Job", func() {
 		var s manifest.Status
 
 		BeforeEach(func() {
-			o := job.Object()
 			completions := int32(1)
+			o := job.Object()
 			o.Status.Succeeded = 1
 			o.Spec.Completions = &completions
 		})
