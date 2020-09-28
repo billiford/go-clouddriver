@@ -6,14 +6,11 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	v1 "k8s.io/api/apps/v1"
-	//corev1 "k8s.io/api/core/v1"
-	//v1 "k8s.io/api/apps/v1beta1"
 )
 
 var _ = Describe("Statefulset", func() {
 	var (
 		ss  StatefulSet
-		//err error
 	)
 
 	BeforeEach(func() {
@@ -21,23 +18,6 @@ var _ = Describe("Statefulset", func() {
 		ss = NewStatefulSet(s)
 	})
 
-	/*Describe("#GetStatefulSetSpec", func() {
-		BeforeEach(func() {
-			_ = ss.GetStatefulSetSpec()
-		})
-
-		It("succeeds", func() {
-		})
-	})
-
-	Describe("#GetStatefulSetStatus", func() {
-		BeforeEach(func() {
-			_ = ss.GetStatefulSetStatus()
-		})
-
-		It("succeeds", func() {
-		})
-	})*/
 
 	Describe("#Object", func() {
 		var s *v1.StatefulSet
@@ -74,7 +54,7 @@ var _ = Describe("Statefulset", func() {
 
 			It("returns status unstable", func() {
 				Expect(s.Stable.State).To(BeFalse())
-				Expect(s.Stable.Message).To(Equal("Waiting for current replicas in stateful set to match expected replicas"))
+				Expect(s.Stable.Message).To(Equal("Waiting for at least the desired replica count to be met"))
 			})
 		})
 	})

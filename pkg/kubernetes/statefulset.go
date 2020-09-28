@@ -2,6 +2,7 @@ package kubernetes
 
 import (
 	"encoding/json"
+	"strings"
 	"github.com/billiford/go-clouddriver/pkg/kubernetes/manifest"
 	v1 "k8s.io/api/apps/v1"
 )
@@ -37,19 +38,46 @@ func (ss *statefulSet) Status() manifest.Status {
 	x := ss.ss
 
 	updStrategyType := x.Spec.UpdateStrategy.Type
-	if updStrategyType == "OnDelete" {
+	if strings.EqualFold(updStrategyType, "OnDelete") {
 		return s
 	}
 
 	if x.ObjectMeta.Generation != x.Status.ObservedGeneration {
 		s.Stable.State = false
-		s.Stable.Message = "Waiting for Stateful Set spec update to be observed"
+		s.Stable.Message = "Waiting for status generation to match updated object generation"
 		return s
 	}
 
 	desired := int32(0)
 	current := x.Status.CurrentReplicas
 	ready := x.Status.ReadyReplicas
+	existing := x.Status.Replicas
+
+	if x.Spec.Replicas != nil {
+		desired = *x.Spec.Replicas
+	}
+
+	if desired > existing {
+		s.Stable.State = false
+		s.Stable.Message = "Waiting for at least the desired replica count to be met"
+
+		return s
+	}
+
+	if desired > ready {
+		s.Stable.State = false
+		s.Stable.Message = "Waiting for all updated replicas to be ready"
+
+		return s
+	}
+
+	if desired > current {
+		s.Stable.State = false
+		s.Stable.Message = "Waiting for all updated replicas to be scheduled"
+
+		return s
+	}
+
 	updateRev := x.Status.UpdateRevision
 	currentRev := x.Status.CurrentRevision
 
@@ -57,24 +85,6 @@ func (ss *statefulSet) Status() manifest.Status {
 		s.Stable.State = false
 		s.Stable.Message = "Waiting for the updated revision to match the current revision"
 		return s	
-	}
-
-	if x.Spec.Replicas != nil {
-		desired = *x.Spec.Replicas
-	}
-
-	if desired > ready {
-		s.Stable.State = false
-		s.Stable.Message = "Waiting for at least the desired replica count to be met"
-
-		return s
-	}
-
-	if desired > current {
-		s.Stable.State = false
-		s.Stable.Message = "Waiting for current replicas in stateful set to match expected replicas"
-
-		return s
 	}
 
 	return s
