@@ -375,49 +375,57 @@ const payloadRequestKubernetesOpsBadManifest = `[
 ]`
 
 const payloadCredentials = `[
-            {
-              "accountType": "provider1",
-              "cacheThreads": 0,
-              "challengeDestructiveActions": false,
-              "cloudProvider": "kubernetes",
-              "dockerRegistries": null,
-              "enabled": false,
-              "environment": "provider1",
-              "name": "provider1",
-              "namespaces": null,
-              "permissions": {
-                "READ": null,
-                "WRITE": null
+              {
+                "accountType": "provider1",
+                "cacheThreads": 0,
+                "challengeDestructiveActions": false,
+                "cloudProvider": "kubernetes",
+                "dockerRegistries": null,
+                "enabled": false,
+                "environment": "provider1",
+                "name": "provider1",
+                "namespaces": null,
+                "permissions": {
+                  "READ": [
+                    "gg_test"
+                  ],
+                  "WRITE": [
+                    "gg_test"
+                  ]
+                },
+                "primaryAccount": false,
+                "providerVersion": "v2",
+                "requiredGroupMembership": [],
+                "skin": "v2",
+                "spinnakerKindMap": null,
+                "type": "kubernetes"
               },
-              "primaryAccount": false,
-              "providerVersion": "v2",
-              "requiredGroupMembership": [],
-              "skin": "v2",
-              "spinnakerKindMap": null,
-              "type": "kubernetes"
-            },
-            {
-              "accountType": "provider2",
-              "cacheThreads": 0,
-              "challengeDestructiveActions": false,
-              "cloudProvider": "kubernetes",
-              "dockerRegistries": null,
-              "enabled": false,
-              "environment": "provider2",
-              "name": "provider2",
-              "namespaces": null,
-              "permissions": {
-                "READ": null,
-                "WRITE": null
-              },
-              "primaryAccount": false,
-              "providerVersion": "v2",
-              "requiredGroupMembership": [],
-              "skin": "v2",
-              "spinnakerKindMap": null,
-              "type": "kubernetes"
-            }
-          ]`
+              {
+                "accountType": "provider2",
+                "cacheThreads": 0,
+                "challengeDestructiveActions": false,
+                "cloudProvider": "kubernetes",
+                "dockerRegistries": null,
+                "enabled": false,
+                "environment": "provider2",
+                "name": "provider2",
+                "namespaces": null,
+                "permissions": {
+                  "READ": [
+                    "gg_test2"
+                  ],
+                  "WRITE": [
+                    "gg_test2"
+                  ]
+                },
+                "primaryAccount": false,
+                "providerVersion": "v2",
+                "requiredGroupMembership": [],
+                "skin": "v2",
+                "spinnakerKindMap": null,
+                "type": "kubernetes"
+              }
+            ]`
 
 const payloadArtifactCredentials = `[
             {
@@ -542,8 +550,12 @@ const payloadCredentialsExpandTrue = `[
                   "namespace2"
                 ],
                 "permissions": {
-                  "READ": null,
-                  "WRITE": null
+                  "READ": [
+                    "gg_test"
+                  ],
+                  "WRITE": [
+                    "gg_test"
+                  ]
                 },
                 "primaryAccount": false,
                 "providerVersion": "v2",
@@ -599,8 +611,12 @@ const payloadCredentialsExpandTrue = `[
                   "namespace2"
                 ],
                 "permissions": {
-                  "READ": null,
-                  "WRITE": null
+                  "READ": [
+                    "gg_test2"
+                  ],
+                  "WRITE": [
+                    "gg_test2"
+                  ]
                 },
                 "primaryAccount": false,
                 "providerVersion": "v2",
@@ -656,8 +672,12 @@ const payloadCredentialsExpandTrueNoNamespaces = `[
                 "name": "provider1",
                 "namespaces": null,
                 "permissions": {
-                  "READ": null,
-                  "WRITE": null
+                  "READ": [
+                    "gg_test"
+                  ],
+                  "WRITE": [
+                    "gg_test"
+                  ]
                 },
                 "primaryAccount": false,
                 "providerVersion": "v2",
@@ -710,8 +730,12 @@ const payloadCredentialsExpandTrueNoNamespaces = `[
                 "name": "provider2",
                 "namespaces": null,
                 "permissions": {
-                  "READ": null,
-                  "WRITE": null
+                  "READ": [
+                    "gg_test2"
+                  ],
+                  "WRITE": [
+                    "gg_test2"
+                  ]
                 },
                 "primaryAccount": false,
                 "providerVersion": "v2",
@@ -1501,6 +1525,15 @@ const payloadListClusters = `{
             ],
             "test-account2": [
               "test-kind2 test-name2",
+              "test-kind3 test-name3"
+            ]
+          }`
+
+const payloadListClusters2 = `{
+            "test-account1": [
+              "test-kind1 test-name1"
+            ],
+            "test-account2": [
               "test-kind3 test-name3"
             ]
           }`
