@@ -36,39 +36,9 @@ type PageResult struct {
 	Cluster        string `json:"cluster,omitempty"`
 }
 
-// Example response
-//
-// [
-//   {
-//     "pageNumber": 1,
-//     "pageSize": 500,
-//     "platform": "aws",
-//     "query": "spinnaker",
-//     "results": [
-//       {
-//         "account": "gke_github-replication-sandbox_us-central1_sandbox-us-central1-dev",
-//         "group": "deployment",
-//         "kubernetesKind": "deployment",
-//         "name": "deployment spin-fiat",
-//         "namespace": "spinnaker",
-//         "provider": "kubernetes",
-//         "region": "spinnaker",
-//         "type": "serverGroupManagers"
-//       },
-//       {
-//         "account": "gke_github-replication-sandbox_us-central1_sandbox-us-central1-dev",
-//         "group": "deployment",
-//         "kubernetesKind": "deployment",
-//         "name": "deployment spin-front50",
-//         "namespace": "spinnaker",
-//         "provider": "kubernetes",
-//         "region": "spinnaker",
-//         "type": "serverGroupManagers"
-//       }
-// 	   ],
-//     "totalMatches": 2
-//   }
-// ]
+// Generic search endpoint. It currently just handles searching previously deployed
+// Kubernetes resources. It queries the clouddriver DB and does NOT reach out to
+// clusters for live data.
 func Search(c *gin.Context) {
 	sc := sql.Instance(c)
 	pageSize, _ := strconv.Atoi(c.Query("pageSize"))
@@ -79,7 +49,8 @@ func Search(c *gin.Context) {
 	accounts := strings.Split(c.GetHeader("X-Spinnaker-Accounts"), ",")
 
 	if kind == "" || namespace == "" {
-		clouddriver.WriteError(c, http.StatusBadRequest, errors.New("must provide query params 'q' and 'type'"))
+		clouddriver.WriteError(c, http.StatusBadRequest,
+			errors.New("must provide query params 'q' to specify the namespace and 'type' to specify the kind"))
 		return
 	}
 
