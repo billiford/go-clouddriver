@@ -2,6 +2,7 @@ package core
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -14,12 +15,12 @@ import (
 type SearchResponse []Page
 
 type Page struct {
-	PageNumber int `json:"pageNumber"`
-	PageSize   int `json:"pageSize"`
-	// Platform     string       `json:"platform"`
+	PageNumber   int          `json:"pageNumber"`
+	PageSize     int          `json:"pageSize"`
 	Query        string       `json:"query"`
 	Results      []PageResult `json:"results"`
 	TotalMatches int          `json:"totalMatches"`
+	// Platform     string       `json:"platform"`
 }
 
 type PageResult struct {
@@ -74,6 +75,7 @@ func Search(c *gin.Context) {
 	namespace := c.Query("q")
 	// The "type" query param is the kubernetes kind.
 	kind := c.Query("type")
+	// Get all accounts the user has access to.
 	accounts := strings.Split(c.GetHeader("X-Spinnaker-Accounts"), ",")
 
 	if kind == "" || namespace == "" {
@@ -83,15 +85,19 @@ func Search(c *gin.Context) {
 
 	results := []PageResult{}
 	for _, account := range accounts {
+		if account == "" {
+			continue
+		}
+
 		if len(results) >= pageSize {
 			break
 		}
 
-		clusters, err := sc.ListKubernetesClustersByAccountNameAndKindAndNamespace(account, kind, namespace)
+		names, err := sc.ListKubernetesResourceNamesByAccountNameAndKindAndNamespace(account, kind, namespace)
 		if err != nil {
 			continue
 		}
-		for _, cluster := range clusters {
+		for _, name := range names {
 			t := "unclassified"
 			if _, ok := spinnakerKindMap[kind]; ok {
 				t = spinnakerKindMap[kind]
@@ -100,13 +106,11 @@ func Search(c *gin.Context) {
 				Account:        account,
 				Group:          kind,
 				KubernetesKind: kind,
-				Name:           cluster,
+				Name:           fmt.Sprintf("%s %s", kind, name),
 				Namespace:      namespace,
 				Provider:       "kubernetes",
 				Region:         namespace,
 				Type:           t,
-				// Application:    "",
-				// Cluster:        "",
 			}
 			results = append(results, result)
 			if len(results) >= pageSize {
@@ -116,13 +120,14 @@ func Search(c *gin.Context) {
 	}
 
 	sr := SearchResponse{}
-	p := Page{
+	page := Page{
 		PageNumber:   1,
 		PageSize:     pageSize,
 		Query:        namespace,
 		Results:      results,
 		TotalMatches: len(results),
 	}
+	sr = append(sr, page)
 
-	c.JSON(http.StatusOK, []string{})
+	c.JSON(http.StatusOK, sr)
 }
