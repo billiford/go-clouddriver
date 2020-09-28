@@ -128,7 +128,7 @@ func (c *client) CreateReadPermission(r clouddriver.ReadPermission) error {
 func (c *client) ListKubernetesClustersByApplication(spinnakerApp string) ([]kubernetes.Resource, error) {
 	var rs []kubernetes.Resource
 	db := c.db.Select("account_name, cluster").
-		Where("spinnaker_app = ? AND kind in (deployment, statefulSet, replicaSet, ingress, service, daemonSet)",
+		Where("spinnaker_app = ? AND kind in ('deployment', 'statefulSet', 'replicaSet', 'ingress', 'service', 'daemonSet')",
 			spinnakerApp).
 		Group("account_name, cluster").Find(&rs)
 

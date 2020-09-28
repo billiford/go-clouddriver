@@ -244,12 +244,12 @@ var _ = Describe("Sql", func() {
 					`account_name, ` +
 					`cluster ` +
 					`FROM "kubernetes_resources" ` +
-					` WHERE \(spinnaker_app = \? AND kind in \(deployment,
-						statefulSet,
-						replicaSet,
-						ingress,
-						service,
-						daemonSet\)\) GROUP BY
+					` WHERE \(spinnaker_app = \? AND kind in \('deployment',
+						'statefulSet',
+						'replicaSet',
+						'ingress',
+						'service',
+						'daemonSet'\)\) GROUP BY
 						account_name, cluster$`).
 					WillReturnRows(sqlRows)
 				mock.ExpectCommit()
