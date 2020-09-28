@@ -4,8 +4,10 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
+	"strings"
 
 	clouddriver "github.com/billiford/go-clouddriver/pkg"
+	"github.com/billiford/go-clouddriver/pkg/sql"
 	"github.com/gin-gonic/gin"
 )
 
@@ -33,23 +35,93 @@ type PageResult struct {
 	Cluster        string `json:"cluster,omitempty"`
 }
 
+// Example response
+//
+// [
+//   {
+//     "pageNumber": 1,
+//     "pageSize": 500,
+//     "platform": "aws",
+//     "query": "spinnaker",
+//     "results": [
+//       {
+//         "account": "gke_github-replication-sandbox_us-central1_sandbox-us-central1-dev",
+//         "group": "deployment",
+//         "kubernetesKind": "deployment",
+//         "name": "deployment spin-fiat",
+//         "namespace": "spinnaker",
+//         "provider": "kubernetes",
+//         "region": "spinnaker",
+//         "type": "serverGroupManagers"
+//       },
+//       {
+//         "account": "gke_github-replication-sandbox_us-central1_sandbox-us-central1-dev",
+//         "group": "deployment",
+//         "kubernetesKind": "deployment",
+//         "name": "deployment spin-front50",
+//         "namespace": "spinnaker",
+//         "provider": "kubernetes",
+//         "region": "spinnaker",
+//         "type": "serverGroupManagers"
+//       }
+// 	   ],
+//     "totalMatches": 2
+//   }
+// ]
 func Search(c *gin.Context) {
-	sr := SearchResponse{}
+	sc := sql.Instance(c)
 	pageSize, _ := strconv.Atoi(c.Query("pageSize"))
 	namespace := c.Query("q")
 	// The "type" query param is the kubernetes kind.
 	kind := c.Query("type")
-	accounts := c.GetHeader("X-Spinnaker-Accounts")
+	accounts := strings.Split(c.GetHeader("X-Spinnaker-Accounts"), ",")
 
 	if kind == "" || namespace == "" {
 		clouddriver.WriteError(c, http.StatusBadRequest, errors.New("must provide query params 'q' and 'type'"))
 		return
 	}
 
-	p := Page{}
 	results := []PageResult{}
 	for _, account := range accounts {
+		if len(results) >= pageSize {
+			break
+		}
 
+		clusters, err := sc.ListKubernetesClustersByAccountNameAndKindAndNamespace(account, kind, namespace)
+		if err != nil {
+			continue
+		}
+		for _, cluster := range clusters {
+			t := "unclassified"
+			if _, ok := spinnakerKindMap[kind]; ok {
+				t = spinnakerKindMap[kind]
+			}
+			result := PageResult{
+				Account:        account,
+				Group:          kind,
+				KubernetesKind: kind,
+				Name:           cluster,
+				Namespace:      namespace,
+				Provider:       "kubernetes",
+				Region:         namespace,
+				Type:           t,
+				// Application:    "",
+				// Cluster:        "",
+			}
+			results = append(results, result)
+			if len(results) >= pageSize {
+				break
+			}
+		}
+	}
+
+	sr := SearchResponse{}
+	p := Page{
+		PageNumber:   1,
+		PageSize:     pageSize,
+		Query:        namespace,
+		Results:      results,
+		TotalMatches: len(results),
 	}
 
 	c.JSON(http.StatusOK, []string{})
