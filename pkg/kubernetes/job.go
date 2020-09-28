@@ -79,7 +79,14 @@ func (j *job) Status() manifest.Status {
 	succeeded := status.Succeeded
 	if succeeded < completions {
 		conditions := status.Conditions
-		for _, condition := range conditions
+		for _, condition := range conditions {
+			if condition.Type == v1.JobFailed {
+				s.Failed.State = true
+				return s
+			}
+		}
+		s.Stable.State = false
+		s.Stable.Message = "Waiting for jobs to finish"
 	}
 
 	return s
