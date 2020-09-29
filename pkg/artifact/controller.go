@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"path/filepath"
 	"strings"
 
@@ -62,8 +61,6 @@ func NewCredentialsController(dir string) (CredentialsController, error) {
 
 	for _, f := range files {
 		if !f.IsDir() {
-			log.Printf("reading artifact credential file %s/%s\n", dir, f.Name())
-
 			b, err := ioutil.ReadFile(filepath.Join(dir, f.Name()))
 			if err != nil {
 				return nil, err
@@ -91,6 +88,10 @@ func NewCredentialsController(dir string) (CredentialsController, error) {
 				t := ac.Types[0]
 				switch t {
 				case TypeHelmChart:
+					if ac.URL == "" {
+						return nil, fmt.Errorf("helm chart %s missing required \"url\" attribute", ac.Name)
+					}
+
 					helmClient := helm.NewClient(ac.URL)
 					cc.helmClients[ac.Name] = helmClient
 				}

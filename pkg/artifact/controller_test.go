@@ -96,6 +96,30 @@ var _ = Describe("Controller", func() {
 			})
 		})
 
+		When("a type helm/chart is missing the url attribute", func() {
+			var tmpFile *os.File
+
+			BeforeEach(func() {
+				tmpFile, err = ioutil.TempFile("test", "cred*.json")
+				_, err = tmpFile.WriteString(`{
+					"name": "helm-test2",
+					"types": [
+					  "helm/chart"
+					]
+				}`)
+				Expect(err).To(BeNil())
+			})
+
+			AfterEach(func() {
+				os.Remove(tmpFile.Name())
+			})
+
+			It("returns an error", func() {
+				Expect(err).ToNot(BeNil())
+				Expect(err.Error()).To(HavePrefix(`helm chart helm-test2 missing required "url" attribute`))
+			})
+		})
+
 		When("it succeeds", func() {
 			It("succeeds", func() {
 				Expect(err).To(BeNil())
