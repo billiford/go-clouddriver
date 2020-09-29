@@ -4,7 +4,6 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/billiford/go-clouddriver/pkg/kubernetes/cached/disk"
@@ -24,7 +23,7 @@ const (
 //go:generate counterfeiter . Controller
 type Controller interface {
 	NewClient(*rest.Config) (Client, error)
-	ClientForConfig(*rest.Config) (Client, error)
+	NewClientWithDefaultDiskCache(*rest.Config) (Client, error)
 	ToUnstructured(map[string]interface{}) (*unstructured.Unstructured, error)
 	AddSpinnakerAnnotations(u *unstructured.Unstructured, application string) error
 	AddSpinnakerLabels(u *unstructured.Unstructured, application string) error
@@ -59,26 +58,14 @@ func (c *controller) NewClient(config *rest.Config) (Client, error) {
 
 const (
 	// Default cache directory.
-	cacheDir = "/var/kube"
+	cacheDir = "/var/kube/cache"
 )
 
 var (
-	clientCache map[string]Client
-	mux         sync.Mutex
-	ttl         = 10 * time.Minute
+	ttl = 10 * time.Minute
 )
 
-// Stores clients in a map using an underlying disk cache directory.
-// This should eliminate the need to constantly use discovery on the
-// Kubernetes host, decreases requests.
-func (c *controller) ClientForConfig(config *rest.Config) (Client, error) {
-	mux.Lock()
-	defer mux.Unlock()
-
-	if _, ok := clientCache[config.Host]; ok {
-		return clientCache[config.Host], nil
-	}
-
+func (c *controller) NewClientWithDefaultDiskCache(config *rest.Config) (Client, error) {
 	dynamicClient, err := dynamic.NewForConfig(config)
 	if err != nil {
 		return nil, err
@@ -102,8 +89,6 @@ func (c *controller) ClientForConfig(config *rest.Config) (Client, error) {
 		config: config,
 		mapper: mapper,
 	}
-
-	clientCache[config.Host] = kubeClient
 
 	return kubeClient, nil
 }
