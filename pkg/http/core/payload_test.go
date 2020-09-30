@@ -209,6 +209,69 @@ const payloadRequestKubernetesOpsRollingRestartManifest = `[
   }
 ]`
 
+const payloadRequestKubernetesOpsRunJob = `[
+  {
+    "runJob": {
+      "enableTraffic": true,
+      "namespaceOverride": "default",
+      "optionalArtifacts": [],
+      "cloudProvider": "kubernetes",
+      "manifests": [
+        {
+          "metadata": {
+            "name": "rss-site",
+            "labels": {
+              "app": "web"
+            }
+          },
+          "apiVersion": "v1",
+          "kind": "Pod",
+          "spec": {
+            "containers": [
+              {
+                "image": "nginx",
+                "name": "front-end",
+                "ports": [
+                  {
+                    "containerPort": 80
+                  }
+                ]
+              },
+              {
+                "image": "nickchase/rss-php-nginx:vasdf1",
+                "name": "rss-reader",
+                "ports": [
+                  {
+                    "containerPort": 88
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "trafficManagement": {
+        "options": {
+          "enableTraffic": true,
+          "namespace": "default",
+          "services": [
+            "service hello-app-red-black"
+          ],
+          "strategy": "redblack"
+        },
+        "enabled": false
+      },
+      "moniker": {
+        "app": "test"
+      },
+      "source": "text",
+      "account": "spin-cluster-account",
+      "skipExpressionEvaluation": false,
+      "requiredArtifacts": []
+    }
+  }
+]`
+
 const payloadRequestKubernetesOpsUndoRolloutManifest = `[
   {
     "undoRolloutManifest": {
@@ -312,49 +375,57 @@ const payloadRequestKubernetesOpsBadManifest = `[
 ]`
 
 const payloadCredentials = `[
-            {
-              "accountType": "provider1",
-              "cacheThreads": 0,
-              "challengeDestructiveActions": false,
-              "cloudProvider": "kubernetes",
-              "dockerRegistries": null,
-              "enabled": false,
-              "environment": "provider1",
-              "name": "provider1",
-              "namespaces": null,
-              "permissions": {
-                "READ": null,
-                "WRITE": null
+              {
+                "accountType": "provider1",
+                "cacheThreads": 0,
+                "challengeDestructiveActions": false,
+                "cloudProvider": "kubernetes",
+                "dockerRegistries": null,
+                "enabled": false,
+                "environment": "provider1",
+                "name": "provider1",
+                "namespaces": null,
+                "permissions": {
+                  "READ": [
+                    "gg_test"
+                  ],
+                  "WRITE": [
+                    "gg_test"
+                  ]
+                },
+                "primaryAccount": false,
+                "providerVersion": "v2",
+                "requiredGroupMembership": [],
+                "skin": "v2",
+                "spinnakerKindMap": null,
+                "type": "kubernetes"
               },
-              "primaryAccount": false,
-              "providerVersion": "v2",
-              "requiredGroupMembership": [],
-              "skin": "v2",
-              "spinnakerKindMap": null,
-              "type": "kubernetes"
-            },
-            {
-              "accountType": "provider2",
-              "cacheThreads": 0,
-              "challengeDestructiveActions": false,
-              "cloudProvider": "kubernetes",
-              "dockerRegistries": null,
-              "enabled": false,
-              "environment": "provider2",
-              "name": "provider2",
-              "namespaces": null,
-              "permissions": {
-                "READ": null,
-                "WRITE": null
-              },
-              "primaryAccount": false,
-              "providerVersion": "v2",
-              "requiredGroupMembership": [],
-              "skin": "v2",
-              "spinnakerKindMap": null,
-              "type": "kubernetes"
-            }
-          ]`
+              {
+                "accountType": "provider2",
+                "cacheThreads": 0,
+                "challengeDestructiveActions": false,
+                "cloudProvider": "kubernetes",
+                "dockerRegistries": null,
+                "enabled": false,
+                "environment": "provider2",
+                "name": "provider2",
+                "namespaces": null,
+                "permissions": {
+                  "READ": [
+                    "gg_test2"
+                  ],
+                  "WRITE": [
+                    "gg_test2"
+                  ]
+                },
+                "primaryAccount": false,
+                "providerVersion": "v2",
+                "requiredGroupMembership": [],
+                "skin": "v2",
+                "spinnakerKindMap": null,
+                "type": "kubernetes"
+              }
+            ]`
 
 const payloadArtifactCredentials = `[
             {
@@ -479,8 +550,12 @@ const payloadCredentialsExpandTrue = `[
                   "namespace2"
                 ],
                 "permissions": {
-                  "READ": null,
-                  "WRITE": null
+                  "READ": [
+                    "gg_test"
+                  ],
+                  "WRITE": [
+                    "gg_test"
+                  ]
                 },
                 "primaryAccount": false,
                 "providerVersion": "v2",
@@ -536,8 +611,12 @@ const payloadCredentialsExpandTrue = `[
                   "namespace2"
                 ],
                 "permissions": {
-                  "READ": null,
-                  "WRITE": null
+                  "READ": [
+                    "gg_test2"
+                  ],
+                  "WRITE": [
+                    "gg_test2"
+                  ]
                 },
                 "primaryAccount": false,
                 "providerVersion": "v2",
@@ -593,8 +672,12 @@ const payloadCredentialsExpandTrueNoNamespaces = `[
                 "name": "provider1",
                 "namespaces": null,
                 "permissions": {
-                  "READ": null,
-                  "WRITE": null
+                  "READ": [
+                    "gg_test"
+                  ],
+                  "WRITE": [
+                    "gg_test"
+                  ]
                 },
                 "primaryAccount": false,
                 "providerVersion": "v2",
@@ -647,8 +730,12 @@ const payloadCredentialsExpandTrueNoNamespaces = `[
                 "name": "provider2",
                 "namespaces": null,
                 "permissions": {
-                  "READ": null,
-                  "WRITE": null
+                  "READ": [
+                    "gg_test2"
+                  ],
+                  "WRITE": [
+                    "gg_test2"
+                  ]
                 },
                 "primaryAccount": false,
                 "providerVersion": "v2",
@@ -1438,6 +1525,15 @@ const payloadListClusters = `{
             ],
             "test-account2": [
               "test-kind2 test-name2",
+              "test-kind3 test-name3"
+            ]
+          }`
+
+const payloadListClusters2 = `{
+            "test-account1": [
+              "test-kind1 test-name1"
+            ],
+            "test-account2": [
               "test-kind3 test-name3"
             ]
           }`
@@ -2306,6 +2402,22 @@ const payloadGetServerGroup = `{
             "insightActions": []
           }`
 
+const payloadGetJob = `{
+            "account": "test-account",
+            "completionDetails": {
+              "exitCode": "",
+              "message": "",
+              "reason": "",
+              "signal": ""
+            },
+            "createdTime": 1581603123000,
+            "jobState": "Running",
+            "location": "test-namespace",
+            "name": "test-job1",
+            "pods": [],
+            "provider": "kubernetes"
+          }`
+
 const payloadListApplications = `[
   {
     "attributes": {},
@@ -2922,3 +3034,115 @@ const payloadRollingRestartManfiest = `[
       }
    }
 ]`
+
+const payloadSearchEmptyResponseWithPageSizeZero = `[
+            {
+              "pageNumber": 1,
+              "pageSize": 0,
+              "query": "default",
+              "results": [],
+              "totalMatches": 0
+            }
+          ]`
+
+const payloadSearchEmptyResponse = `[
+            {
+              "pageNumber": 1,
+              "pageSize": 500,
+              "query": "default",
+              "results": [],
+              "totalMatches": 0
+            }
+          ]`
+
+const payloadSearch = `[
+            {
+              "pageNumber": 1,
+              "pageSize": 500,
+              "query": "default",
+              "results": [
+                {
+                  "account": "account1",
+                  "group": "pod",
+                  "kubernetesKind": "pod",
+                  "name": "pod test-name1",
+                  "namespace": "default",
+                  "provider": "kubernetes",
+                  "region": "default",
+                  "type": "instances"
+                },
+                {
+                  "account": "account1",
+                  "group": "pod",
+                  "kubernetesKind": "pod",
+                  "name": "pod test-name2",
+                  "namespace": "default",
+                  "provider": "kubernetes",
+                  "region": "default",
+                  "type": "instances"
+                },
+                {
+                  "account": "account2",
+                  "group": "pod",
+                  "kubernetesKind": "pod",
+                  "name": "pod test-name1",
+                  "namespace": "default",
+                  "provider": "kubernetes",
+                  "region": "default",
+                  "type": "instances"
+                },
+                {
+                  "account": "account2",
+                  "group": "pod",
+                  "kubernetesKind": "pod",
+                  "name": "pod test-name2",
+                  "namespace": "default",
+                  "provider": "kubernetes",
+                  "region": "default",
+                  "type": "instances"
+                }
+              ],
+              "totalMatches": 4
+            }
+          ]`
+
+const payloadSearchWithPageSizeThree = `[
+            {
+              "pageNumber": 1,
+              "pageSize": 3,
+              "query": "default",
+              "results": [
+                {
+                  "account": "account1",
+                  "group": "pod",
+                  "kubernetesKind": "pod",
+                  "name": "pod test-name1",
+                  "namespace": "default",
+                  "provider": "kubernetes",
+                  "region": "default",
+                  "type": "instances"
+                },
+                {
+                  "account": "account1",
+                  "group": "pod",
+                  "kubernetesKind": "pod",
+                  "name": "pod test-name2",
+                  "namespace": "default",
+                  "provider": "kubernetes",
+                  "region": "default",
+                  "type": "instances"
+                },
+                {
+                  "account": "account2",
+                  "group": "pod",
+                  "kubernetesKind": "pod",
+                  "name": "pod test-name1",
+                  "namespace": "default",
+                  "provider": "kubernetes",
+                  "region": "default",
+                  "type": "instances"
+                }
+              ],
+              "totalMatches": 3
+            }
+          ]`

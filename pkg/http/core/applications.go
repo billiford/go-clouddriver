@@ -200,7 +200,7 @@ func ListServerGroupManagers(c *gin.Context) {
 		replicaSets := &unstructured.UnstructuredList{}
 
 		lo := metav1.ListOptions{
-			LabelSelector: kubernetes.LabelKubernetesSpinnakerApp + "=" + application,
+			LabelSelector: kubernetes.LabelKubernetesName + "=" + application,
 		}
 
 		deploymentGVR := schema.GroupVersionResource{
@@ -214,13 +214,13 @@ func ListServerGroupManagers(c *gin.Context) {
 			Resource: "replicasets",
 		}
 
-		deployments, err = client.List(deploymentGVR, lo)
+		deployments, err = client.ListByGVR(deploymentGVR, lo)
 		if err != nil {
 			log.Println("error listing deployments:", err.Error())
 			continue
 		}
 
-		replicaSets, err = client.List(replicaSetGVR, lo)
+		replicaSets, err = client.ListByGVR(replicaSetGVR, lo)
 		if err != nil {
 			log.Println("error listing replicaSets:", err.Error())
 			continue
@@ -389,7 +389,7 @@ func ListLoadBalancers(c *gin.Context) {
 		// Label selector for all that we are listing in the cluster. We
 		// only want to list resources that have a label referencing the requested application.
 		lo := metav1.ListOptions{
-			LabelSelector: kubernetes.LabelKubernetesSpinnakerApp + "=" + application,
+			LabelSelector: kubernetes.LabelKubernetesName + "=" + application,
 		}
 
 		// TODO get these using the dynamic account.
@@ -400,7 +400,7 @@ func ListLoadBalancers(c *gin.Context) {
 			Resource: "ingresses",
 		}
 
-		ingresses, err := client.List(ingressGVR, lo)
+		ingresses, err := client.ListByGVR(ingressGVR, lo)
 		if err != nil {
 			log.Println("error listing ingresses:", err.Error())
 			continue
@@ -417,7 +417,7 @@ func ListLoadBalancers(c *gin.Context) {
 			Resource: "services",
 		}
 
-		services, err := client.List(serviceGVR, lo)
+		services, err := client.ListByGVR(serviceGVR, lo)
 		if err != nil {
 			log.Println("error listing services:", err.Error())
 			continue
@@ -465,15 +465,15 @@ func newLoadBalancer(u unstructured.Unstructured, account, application string) L
 
 type Clusters map[string][]string
 
-// List clusters, which for kubernetes is a map of provider names to kubernetes deployment
+// List clusters for a given application, which for kubernetes is a map of provider names to kubernetes deployment
 // kinds and names.
 //
-// TODO For now we are pulling this from the DB, but it might be possible to make API calls to
-// the cluster.
+// Clusters are kinds deployment, statefulSet, replicaSet, ingress, service, and daemonSet.
 func ListClusters(c *gin.Context) {
 	sc := sql.Instance(c)
+	application := c.Param("application")
 
-	rs, err := sc.ListKubernetesResourcesByFields("account_name", "kind", "name")
+	rs, err := sc.ListKubernetesClustersByApplication(application)
 	if err != nil {
 		clouddriver.WriteError(c, http.StatusInternalServerError, err)
 		return
@@ -482,12 +482,14 @@ func ListClusters(c *gin.Context) {
 	response := Clusters{}
 
 	for _, resource := range rs {
-		if _, ok := response[resource.AccountName]; !ok {
-			response[resource.AccountName] = []string{}
+		if resource.Cluster != "" {
+			if _, ok := response[resource.AccountName]; !ok {
+				response[resource.AccountName] = []string{}
+			}
+			kr := response[resource.AccountName]
+			kr = append(kr, resource.Cluster)
+			response[resource.AccountName] = kr
 		}
-		kr := response[resource.AccountName]
-		kr = append(kr, fmt.Sprintf("%s %s", resource.Kind, resource.Name))
-		response[resource.AccountName] = kr
 	}
 
 	c.JSON(http.StatusOK, response)
@@ -636,7 +638,7 @@ func ListServerGroups(c *gin.Context) {
 		}
 
 		lo := metav1.ListOptions{
-			LabelSelector: kubernetes.LabelKubernetesSpinnakerApp + "=" + application,
+			LabelSelector: kubernetes.LabelKubernetesName + "=" + application,
 		}
 
 		// Create a GVR for replicasets.
@@ -650,13 +652,13 @@ func ListServerGroups(c *gin.Context) {
 			Resource: "pods",
 		}
 
-		replicaSets, err := client.List(replicaSetGVR, lo)
+		replicaSets, err := client.ListByGVR(replicaSetGVR, lo)
 		if err != nil {
 			log.Println("error listing replicaSets:", err.Error())
 			continue
 		}
 
-		pods, err := client.List(podsGVR, lo)
+		pods, err := client.ListByGVR(podsGVR, lo)
 		if err != nil {
 			log.Println("error listing pods:", err.Error())
 			continue
@@ -782,10 +784,9 @@ func GetServerGroup(c *gin.Context) {
 	account := c.Param("account")
 	application := c.Param("application")
 	location := c.Param("location")
-	n := c.Param("name")
-	a := strings.Split(n, " ")
-	kind := a[0]
-	name := a[1]
+	nameArray := strings.Split(c.Param("name"), " ")
+	kind := nameArray[0]
+	name := nameArray[1]
 
 	provider, err := sc.GetKubernetesProvider(account)
 	if err != nil {
@@ -820,7 +821,7 @@ func GetServerGroup(c *gin.Context) {
 	}
 
 	lo := metav1.ListOptions{
-		LabelSelector: kubernetes.LabelKubernetesSpinnakerApp + "=" + application,
+		LabelSelector: kubernetes.LabelKubernetesName + "=" + application,
 	}
 
 	podsGVR := schema.GroupVersionResource{
@@ -835,7 +836,7 @@ func GetServerGroup(c *gin.Context) {
 	}
 
 	// "Instances" in kubernetes are pods.
-	pods, err := client.List(podsGVR, lo)
+	pods, err := client.ListByGVR(podsGVR, lo)
 	if err != nil {
 		clouddriver.WriteError(c, http.StatusInternalServerError, err)
 		return
@@ -974,4 +975,93 @@ func GetServerGroup(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, response)
+}
+
+type Job struct {
+	Account           string                   `json:"account"`
+	CompletionDetails JobCompletionDetails     `json:"completionDetails"`
+	CreatedTime       int64                    `json:"createdTime"`
+	JobState          string                   `json:"jobState"`
+	Location          string                   `json:"location"`
+	Name              string                   `json:"name"`
+	Pods              []map[string]interface{} `json:"pods"`
+	Provider          string                   `json:"provider"`
+}
+
+type JobCompletionDetails struct {
+	ExitCode string `json:"exitCode"`
+	Message  string `json:"message"`
+	Reason   string `json:"reason"`
+	Signal   string `json:"signal"`
+}
+
+func GetJob(c *gin.Context) {
+	sc := sql.Instance(c)
+	kc := kubernetes.ControllerInstance(c)
+	ac := arcade.Instance(c)
+	account := c.Param("account")
+	// application := c.Param("application")
+	location := c.Param("location")
+	nameArray := strings.Split(c.Param("name"), " ")
+	kind := nameArray[0]
+	name := nameArray[1]
+
+	provider, err := sc.GetKubernetesProvider(account)
+	if err != nil {
+		clouddriver.WriteError(c, http.StatusInternalServerError, err)
+		return
+	}
+
+	cd, err := base64.StdEncoding.DecodeString(provider.CAData)
+	if err != nil {
+		clouddriver.WriteError(c, http.StatusInternalServerError, err)
+		return
+	}
+
+	token, err := ac.Token()
+	if err != nil {
+		clouddriver.WriteError(c, http.StatusInternalServerError, err)
+		return
+	}
+
+	config := &rest.Config{
+		Host:        provider.Host,
+		BearerToken: token,
+		TLSClientConfig: rest.TLSClientConfig{
+			CAData: cd,
+		},
+	}
+
+	client, err := kc.NewClient(config)
+	if err != nil {
+		clouddriver.WriteError(c, http.StatusInternalServerError, err)
+		return
+	}
+
+	result, err := client.Get(kind, name, location)
+	if err != nil {
+		clouddriver.WriteError(c, http.StatusInternalServerError, err)
+		return
+	}
+
+	j := kubernetes.NewJob(result.Object)
+
+	// TODO fill in pod definitions.
+	job := Job{
+		Account: account,
+		CompletionDetails: JobCompletionDetails{
+			ExitCode: "",
+			Message:  "",
+			Reason:   "",
+			Signal:   "",
+		},
+		CreatedTime: result.GetCreationTimestamp().Unix() * 1000,
+		JobState:    j.State(),
+		Location:    location,
+		Name:        name,
+		Pods:        []map[string]interface{}{},
+		Provider:    "kubernetes",
+	}
+
+	c.JSON(http.StatusOK, job)
 }

@@ -66,37 +66,21 @@ func ListCredentials(c *gin.Context) {
 	kc := kubernetes.ControllerInstance(c)
 	credentials := []clouddriver.Credential{}
 
-	providers, err := sc.ListKubernetesProviders()
+	providers, err := sc.ListKubernetesProvidersAndPermissions()
 	if err != nil {
 		clouddriver.WriteError(c, http.StatusInternalServerError, err)
 		return
 	}
 
 	for _, provider := range providers {
-		readGroups, err := sc.ListReadGroupsByAccountName(provider.Name)
-		if err != nil {
-			clouddriver.WriteError(c, http.StatusInternalServerError, err)
-			return
-		}
-
-		writeGroups, err := sc.ListWriteGroupsByAccountName(provider.Name)
-		if err != nil {
-			clouddriver.WriteError(c, http.StatusInternalServerError, err)
-			return
-		}
-
 		sca := clouddriver.Credential{
-			AccountType: provider.Name,
-			// CacheThreads:                0,
-			// ChallengeDestructiveActions: false,
+			AccountType:   provider.Name,
 			CloudProvider: "kubernetes",
-			// DockerRegistries:            nil,
-			// Enabled:                     false,
-			Environment: provider.Name,
-			Name:        provider.Name,
+			Environment:   provider.Name,
+			Name:          provider.Name,
 			Permissions: clouddriver.Permissions{
-				READ:  readGroups,
-				WRITE: writeGroups,
+				READ:  provider.Permissions.Read,
+				WRITE: provider.Permissions.Write,
 			},
 			PrimaryAccount:          false,
 			ProviderVersion:         "v2",
@@ -111,11 +95,6 @@ func ListCredentials(c *gin.Context) {
 		credentials = append(credentials, sca)
 	}
 
-	type AccountNamespaces struct {
-		Name       string
-		Namespaces []string
-	}
-
 	// Only list namespaces when the 'expand' query param is set to true.
 	//
 	// Gate is polling the endpoint `/credentials?expand=true` once every
@@ -128,66 +107,7 @@ func ListCredentials(c *gin.Context) {
 
 		// Get all namespaces of allowed accounts asynchronously.
 		for _, provider := range providers {
-			go func(account string) {
-				defer wg.Done()
-
-				provider, err := sc.GetKubernetesProvider(account)
-				if err != nil {
-					log.Println("/credentials error getting provider:", err.Error())
-					return
-				}
-
-				cd, err := base64.StdEncoding.DecodeString(provider.CAData)
-				if err != nil {
-					log.Println("/credentials error decoding provider ca data:", err.Error())
-					return
-				}
-
-				token, err := ac.Token()
-				if err != nil {
-					log.Println("error getting arcade token:", err.Error())
-					return
-				}
-
-				config := &rest.Config{
-					Host:        provider.Host,
-					BearerToken: token,
-					TLSClientConfig: rest.TLSClientConfig{
-						CAData: cd,
-					},
-				}
-
-				client, err := kc.NewClient(config)
-				if err != nil {
-					log.Println("/credentials error creating dynamic account:", err.Error())
-					return
-				}
-
-				gvr := schema.GroupVersionResource{
-					Group:    "",
-					Version:  "v1",
-					Resource: "namespaces",
-				}
-				// timeout listing namespaces to 5 seconds
-				result, err := client.List(gvr, metav1.ListOptions{
-					TimeoutSeconds: &listNamespacesTimeout,
-				})
-				if err != nil {
-					log.Println("/credentials error listing using kubernetes account:", err.Error())
-					return
-				}
-
-				namespaces := []string{}
-				for _, ns := range result.Items {
-					namespaces = append(namespaces, ns.GetName())
-				}
-				an := AccountNamespaces{
-					Name:       account,
-					Namespaces: namespaces,
-				}
-
-				accountNamespacesCh <- an
-			}(provider.Name)
+			go listNamespaces(provider, wg, accountNamespacesCh, ac, kc)
 		}
 
 		wg.Wait()
@@ -205,6 +125,70 @@ func ListCredentials(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, credentials)
+}
+
+type AccountNamespaces struct {
+	Name       string
+	Namespaces []string
+}
+
+func listNamespaces(provider kubernetes.Provider,
+	wg *sync.WaitGroup,
+	accountNamespacesCh chan AccountNamespaces,
+	ac arcade.Client,
+	kc kubernetes.Controller) {
+	defer wg.Done()
+
+	cd, err := base64.StdEncoding.DecodeString(provider.CAData)
+	if err != nil {
+		log.Println("/credentials error decoding provider ca data:", err.Error())
+		return
+	}
+
+	token, err := ac.Token()
+	if err != nil {
+		log.Println("error getting arcade token:", err.Error())
+		return
+	}
+
+	config := &rest.Config{
+		Host:        provider.Host,
+		BearerToken: token,
+		TLSClientConfig: rest.TLSClientConfig{
+			CAData: cd,
+		},
+	}
+
+	client, err := kc.NewClient(config)
+	if err != nil {
+		log.Println("/credentials error creating dynamic account:", err.Error())
+		return
+	}
+
+	gvr := schema.GroupVersionResource{
+		Group:    "",
+		Version:  "v1",
+		Resource: "namespaces",
+	}
+	// timeout listing namespaces to 5 seconds
+	result, err := client.ListByGVR(gvr, metav1.ListOptions{
+		TimeoutSeconds: &listNamespacesTimeout,
+	})
+	if err != nil {
+		log.Println("/credentials error listing using kubernetes account:", err.Error())
+		return
+	}
+
+	namespaces := []string{}
+	for _, ns := range result.Items {
+		namespaces = append(namespaces, ns.GetName())
+	}
+	an := AccountNamespaces{
+		Name:       provider.Name,
+		Namespaces: namespaces,
+	}
+
+	accountNamespacesCh <- an
 }
 
 func GetAccountCredentials(c *gin.Context) {
