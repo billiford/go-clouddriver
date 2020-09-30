@@ -2,6 +2,7 @@ package kubernetes
 
 import (
 	"encoding/json"
+	"reflect"
 	"strings"
 
 	"github.com/billiford/go-clouddriver/pkg/kubernetes/manifest"
@@ -84,6 +85,12 @@ func (ds *daemonSet) LabelTemplateIfNotExists(key, value string) {
 
 func (ds *daemonSet) Status() manifest.Status {
 	s := manifest.DefaultStatus
+
+	if reflect.DeepEqual(ds.ds.Status, v1.DaemonSetStatus{}) {
+		s = manifest.NoneReported
+
+		return s
+	}
 
 	if strings.EqualFold(string(ds.ds.Spec.UpdateStrategy.Type), "rollingupdate") {
 		return s
