@@ -195,7 +195,7 @@ var _ = Describe("Annotation", func() {
 		Context("the name label exists", func() {
 			BeforeEach(func() {
 				m := map[string]interface{}{
-					"kind":       "ReplicaSet",
+					"kind":       "DaemonSet",
 					"apiVersion": "apps/v1",
 					"metadata": map[string]interface{}{
 						"namespace": "default",
