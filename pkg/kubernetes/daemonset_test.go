@@ -113,6 +113,35 @@ var _ = Describe("DaemonSet", func() {
 			s = daemonSet.Status()
 		})
 
+		When("there is no status", func() {
+			BeforeEach(func() {
+				ds := map[string]interface{}{}
+				daemonSet = NewDaemonSet(ds)
+			})
+
+			It("returns status unstable and unavailable", func() {
+				Expect(s.Stable.State).To(BeFalse())
+				Expect(s.Stable.Message).To(Equal("No status reported yet"))
+				Expect(s.Available.State).To(BeFalse())
+				Expect(s.Available.Message).To(Equal("No availability reported"))
+
+			})
+		})
+
+		When("the update stategy is rolling update", func() {
+			BeforeEach(func() {
+				o := daemonSet.Object()
+				o.Spec.UpdateStrategy = v1.DaemonSetUpdateStrategy{
+					Type: v1.RollingUpdateDaemonSetStrategyType,
+				}
+			})
+
+			It("returns status stable and available", func() {
+				Expect(s.Stable.State).To(BeTrue())
+				Expect(s.Available.State).To(BeTrue())
+			})
+		})
+
 		When("the generations do not match", func() {
 			BeforeEach(func() {
 				o := daemonSet.Object()
