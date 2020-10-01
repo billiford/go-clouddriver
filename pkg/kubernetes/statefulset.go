@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"reflect"
 	"strings"
+
 	"github.com/billiford/go-clouddriver/pkg/kubernetes/manifest"
 	v1 "k8s.io/api/apps/v1"
 )
@@ -44,9 +45,8 @@ func (ss *statefulSet) Status() manifest.Status {
 
 	if reflect.DeepEqual(x.Status, v1.StatefulSetStatus{}) {
 		s = manifest.NoneReported
-
 		return s
-	}	
+	}
 
 	if x.ObjectMeta.Generation != x.Status.ObservedGeneration {
 		s.Stable.State = false
@@ -75,20 +75,20 @@ func (ss *statefulSet) Status() manifest.Status {
 		return s
 	}
 
-	updType := string(x.Spec.UpdateStrategy.Type)	
+	updType := string(x.Spec.UpdateStrategy.Type)
 	rollUpd := x.Spec.UpdateStrategy.RollingUpdate
 	updated := x.Status.UpdatedReplicas
-	
-	if strings.EqualFold(updType, "rollingupdate") && updated != 0 && rollUpd != nil {
+
+	if strings.EqualFold(updType, "rollingupdate") && rollUpd != nil {
 		partition := rollUpd.Partition
-		if partition != nil  && (updated < (existing - *partition)) {
-			s.Stable.State = false	
+		if partition != nil && (updated < (existing - *partition)) {
+			s.Stable.State = false
 			s.Stable.Message = "Waiting for partitioned rollout to finish"
-			return s	
-		} 
-		s.Stable.State = true	
+			return s
+		}
+		s.Stable.State = true
 		s.Stable.Message = "Partitioned roll out complete"
-		return s	
+		return s
 	}
 
 	current := x.Status.CurrentReplicas
@@ -105,7 +105,7 @@ func (ss *statefulSet) Status() manifest.Status {
 	if currentRev != updateRev {
 		s.Stable.State = false
 		s.Stable.Message = "Waiting for the updated revision to match the current revision"
-		return s	
+		return s
 	}
 
 	return s
