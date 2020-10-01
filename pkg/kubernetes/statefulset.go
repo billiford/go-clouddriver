@@ -2,7 +2,6 @@ package kubernetes
 
 import (
 	"encoding/json"
-	//"fmt"
 	"reflect"
 	"strings"
 	"github.com/billiford/go-clouddriver/pkg/kubernetes/manifest"
@@ -77,15 +76,19 @@ func (ss *statefulSet) Status() manifest.Status {
 	}
 
 	updType := string(x.Spec.UpdateStrategy.Type)	
+	rollUpd := x.Spec.UpdateStrategy.RollingUpdate
 	updated := x.Status.UpdatedReplicas
-	partition := *x.Spec.UpdateStrategy.RollingUpdate.Partition
 	
-	if strings.EqualFold(updType, "rollingupdate") && updated != 0 && partition != 0 {
-		if existing != 0 && partition != 0 && (updated < (existing - partition)) {
+	if strings.EqualFold(updType, "rollingupdate") && updated != 0 && rollUpd != nil {
+		partition := rollUpd.Partition
+		if partition != nil  && (updated < (existing - *partition)) {
 			s.Stable.State = false	
 			s.Stable.Message = "Waiting for partitioned rollout to finish"
 			return s	
-		}
+		} 
+		s.Stable.State = true	
+		s.Stable.Message = "Partitioned roll out complete"
+		return s	
 	}
 
 	current := x.Status.CurrentReplicas
