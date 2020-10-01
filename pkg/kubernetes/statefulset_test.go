@@ -121,6 +121,7 @@ var _ = Describe("Statefulset", func() {
 					partition := int32(2)
 					o := ss.Object()
 					o.Status.UpdatedReplicas = 1
+					o.Status.CurrentReplicas = 3
 					o.Spec.UpdateStrategy.RollingUpdate.Partition = &partition
 				})
 
