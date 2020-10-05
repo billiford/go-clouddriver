@@ -797,6 +797,12 @@ func listImages(result *unstructured.Unstructured) []string {
 		for _, container := range o.Spec.Template.Spec.Containers {
 			images = append(images, container.Image)
 		}
+	case "statefulset":
+		sts := kubernetes.NewStatefulSet(result.Object)
+		o := sts.Object()
+		for _, container := range o.Spec.Template.Spec.Containers {
+			images = append(images, container.Image)
+		}
 	}
 
 	return images
@@ -816,6 +822,12 @@ func getDesiredReplicasCount(result *unstructured.Unstructured) int32 {
 		ds := kubernetes.NewDaemonSet(result.Object)
 		o := ds.Object()
 		desired = o.Status.DesiredNumberScheduled
+	case "statefulset":
+		sts := kubernetes.NewStatefulSet(result.Object)
+		o := sts.Object()
+		if o.Spec.Replicas != nil {
+			desired = *o.Spec.Replicas
+		}
 	}
 
 	return desired
@@ -828,13 +840,15 @@ func getTotalReplicasCount(result *unstructured.Unstructured) int32 {
 	switch strings.ToLower(result.GetKind()) {
 	case "replicaset":
 		rs := kubernetes.NewReplicaSet(result.Object)
-		if rs.GetReplicaSetSpec().Replicas != nil {
-			total = rs.GetReplicaSetStatus().Replicas
-		}
+		total = rs.GetReplicaSetStatus().Replicas
 	case "daemonset":
 		ds := kubernetes.NewDaemonSet(result.Object)
 		o := ds.Object()
 		total = o.Status.DesiredNumberScheduled
+	case "statefulset":
+		sts := kubernetes.NewStatefulSet(result.Object)
+		o := sts.Object()
+		total = o.Status.Replicas
 	}
 
 	return total
@@ -854,6 +868,10 @@ func getReadyReplicasCount(result *unstructured.Unstructured) int32 {
 		ds := kubernetes.NewDaemonSet(result.Object)
 		o := ds.Object()
 		ready = o.Status.NumberReady
+	case "statefulset":
+		sts := kubernetes.NewStatefulSet(result.Object)
+		o := sts.Object()
+		ready = o.Status.ReadyReplicas
 	}
 
 	return ready

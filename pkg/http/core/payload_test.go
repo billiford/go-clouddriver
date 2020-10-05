@@ -1327,10 +1327,13 @@ const payloadListServerGroups = `[
               "account": "account1",
               "accountName": "",
               "buildInfo": {
-                "images": []
+                "images": [
+                  "test-image1",
+                  "test-image2"
+                ]
               },
               "capacity": {
-                "desired": 0,
+                "desired": 1,
                 "pinned": false
               },
               "cloudProvider": "kubernetes",
@@ -1341,7 +1344,7 @@ const payloadListServerGroups = `[
                 "down": 0,
                 "outOfService": 0,
                 "starting": 0,
-                "total": 0,
+                "total": 1,
                 "unknown": 0,
                 "up": 0
               },
