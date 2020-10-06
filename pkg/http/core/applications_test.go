@@ -98,7 +98,6 @@ var _ = Describe("Application", func() {
 			createRequest(http.MethodGet)
 			fakeSQLClient.ListKubernetesAccountsBySpinnakerAppReturns([]string{
 				"account1",
-				// "account2",
 			}, nil)
 			fakeKubeClient.ListResourceReturnsOnCall(0, &unstructured.UnstructuredList{
 				Items: []unstructured.Unstructured{
@@ -472,7 +471,6 @@ var _ = Describe("Application", func() {
 			createRequest(http.MethodGet)
 			fakeSQLClient.ListKubernetesAccountsBySpinnakerAppReturns([]string{
 				"account1",
-				// "account2",
 			}, nil)
 			fakeKubeClient.ListResourceReturnsOnCall(0, &unstructured.UnstructuredList{
 				Items: []unstructured.Unstructured{
