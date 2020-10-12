@@ -11,6 +11,7 @@ require (
 	github.com/go-playground/assert/v2 v2.0.1
 	github.com/go-sql-driver/mysql v1.5.0
 	github.com/golang/gddo v0.0.0-20200715224205-051695c33a3f
+	github.com/google/go-github/v32 v32.1.0
 	github.com/google/uuid v1.1.1
 	github.com/googleapis/gnostic v0.5.1
 	github.com/gregjones/httpcache v0.0.0-20180305231024-9cad4c3443a7
