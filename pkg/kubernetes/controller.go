@@ -9,8 +9,6 @@ import (
 	"github.com/billiford/go-clouddriver/pkg/kubernetes/cached/disk"
 	"github.com/gin-gonic/gin"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/client-go/discovery"
-	"k8s.io/client-go/discovery/cached/memory"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/restmapper"
@@ -23,7 +21,6 @@ const (
 //go:generate counterfeiter . Controller
 type Controller interface {
 	NewClient(*rest.Config) (Client, error)
-	NewClientWithDefaultDiskCache(*rest.Config) (Client, error)
 	ToUnstructured(map[string]interface{}) (*unstructured.Unstructured, error)
 	AddSpinnakerAnnotations(u *unstructured.Unstructured, application string) error
 	AddSpinnakerLabels(u *unstructured.Unstructured, application string) error
@@ -36,24 +33,7 @@ func NewController() Controller {
 type controller struct{}
 
 func (c *controller) NewClient(config *rest.Config) (Client, error) {
-	dynamicClient, err := dynamic.NewForConfig(config)
-	if err != nil {
-		return nil, err
-	}
-
-	// DiscoveryClient queries API server about the resources
-	dc, err := discovery.NewDiscoveryClientForConfig(config)
-	if err != nil {
-		return nil, err
-	}
-
-	mapper := restmapper.NewDeferredDiscoveryRESTMapper(memory.NewMemCacheClient(dc))
-
-	return &client{
-		c:      dynamicClient,
-		config: config,
-		mapper: mapper,
-	}, nil
+	return newClientWithDefaultDiskCache(config)
 }
 
 const (
@@ -65,7 +45,7 @@ var (
 	ttl = 10 * time.Minute
 )
 
-func (c *controller) NewClientWithDefaultDiskCache(config *rest.Config) (Client, error) {
+func newClientWithDefaultDiskCache(config *rest.Config) (Client, error) {
 	dynamicClient, err := dynamic.NewForConfig(config)
 	if err != nil {
 		return nil, err

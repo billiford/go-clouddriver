@@ -69,7 +69,7 @@ func GetManifest(c *gin.Context) {
 		},
 	}
 
-	client, err := kc.NewClientWithDefaultDiskCache(config)
+	client, err := kc.NewClient(config)
 	if err != nil {
 		clouddriver.WriteError(c, http.StatusInternalServerError, err)
 		return
