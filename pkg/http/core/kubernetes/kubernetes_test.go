@@ -99,6 +99,9 @@ func newActionConfig() ActionConfig {
 			},
 			PatchManifest: &PatchManifestRequest{
 				ManifestName: "deployment test-deployment",
+				Options: PatchManifestRequestOptions{
+					MergeStrategy: "json",
+				},
 			},
 			RunJob: &RunJobRequest{
 				Application:   "test-application",
