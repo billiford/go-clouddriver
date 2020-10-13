@@ -110,7 +110,7 @@ var _ = Describe("Patch", func() {
 				actionConfig.Operation.PatchManifest.Options.MergeStrategy = "unknown"
 			})
 
-			It("succeeds", func() {
+			It("returns an error", func() {
 				Expect(err).ToNot(BeNil())
 				Expect(err.Error()).To(Equal("invalid merge strategy unknown"))
 			})
