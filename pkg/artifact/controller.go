@@ -8,26 +8,29 @@ import (
 	"strings"
 
 	"github.com/billiford/go-clouddriver/pkg/helm"
+	"github.com/gin-gonic/gin"
 	// "github.com/google/go-github/v32/github"
 )
 
 type Type string
 
 const (
-	TypeHelmChart               Type = "helm/chart"
-	TypeGitRepo                 Type = "git/repo"
-	TypeFront50PipelineTemplate Type = "front50/pipelineTemplate"
-	TypeEmbeddedBase64          Type = "embedded/base64"
-	TypeCustomerObject          Type = "custom/object"
-	TypeGCSObject               Type = "gcs/object"
-	TypeDockerImage             Type = "docker/image"
-	TypeKubernetesConfigMap     Type = "kubernetes/configMap"
-	TypeKubernetesDeployment    Type = "kubernetes/deployment"
-	TypeKubernetesReplicaSet    Type = "kubernetes/replicaSet"
-	TypeKubernetesSecret        Type = "kubernetes/secret"
-	TypeGithubFile              Type = "github/file"
+	CredentialsControllerInstanceKey      = "ArtifactCredentialsController"
+	TypeHelmChart                    Type = "helm/chart"
+	TypeGitRepo                      Type = "git/repo"
+	TypeFront50PipelineTemplate      Type = "front50/pipelineTemplate"
+	TypeEmbeddedBase64               Type = "embedded/base64"
+	TypeCustomerObject               Type = "custom/object"
+	TypeGCSObject                    Type = "gcs/object"
+	TypeDockerImage                  Type = "docker/image"
+	TypeKubernetesConfigMap          Type = "kubernetes/configMap"
+	TypeKubernetesDeployment         Type = "kubernetes/deployment"
+	TypeKubernetesReplicaSet         Type = "kubernetes/replicaSet"
+	TypeKubernetesSecret             Type = "kubernetes/secret"
+	TypeGithubFile                   Type = "github/file"
 )
 
+//go:generate counterfeiter . CredentialsController
 type CredentialsController interface {
 	ListArtifactCredentialsNamesAndTypes() []Credentials
 	HelmClientForAccountName(string) (helm.Client, error)
@@ -61,9 +64,22 @@ func NewCredentialsController(dir string) (CredentialsController, error) {
 
 	for _, f := range files {
 		if !f.IsDir() {
-			b, err := ioutil.ReadFile(filepath.Join(dir, f.Name()))
+			path := filepath.Join(dir, f.Name())
+
+			// Handle symlinks for ConfigMaps.
+			ln, err := filepath.EvalSymlinks(path)
+			if err == nil {
+				path = ln
+			}
+
+			b, err := ioutil.ReadFile(path)
 			if err != nil {
-				return nil, err
+				// Just continue if we're not able to read the 'file' as the file might be a symlink to
+				// a dir when using kubernetes ConfigMaps, for example:
+				//
+				// drwxr-xr-x    2 root     root          4096 Oct  8 20:38 ..2020_10_08_20_38_50.434422700
+				// lrwxrwxrwx    1 root     root            31 Oct  8 20:38 ..data -> ..2020_10_08_20_38_50.434422700
+				continue
 			}
 
 			ac := Credentials{}
@@ -74,7 +90,7 @@ func NewCredentialsController(dir string) (CredentialsController, error) {
 			}
 
 			if ac.Name == "" {
-				return nil, fmt.Errorf("no \"name\" found in artifact config file %s", filepath.Join(dir, f.Name()))
+				return nil, fmt.Errorf("no \"name\" found in artifact config file %s", path)
 			}
 
 			for _, c := range cc.artifactCredentials {
@@ -131,4 +147,8 @@ func (cc *credentialsController) HelmClientForAccountName(accountName string) (h
 	}
 
 	return cc.helmClients[accountName], nil
+}
+
+func CredentialsControllerInstance(c *gin.Context) CredentialsController {
+	return c.MustGet(CredentialsControllerInstanceKey).(CredentialsController)
 }
