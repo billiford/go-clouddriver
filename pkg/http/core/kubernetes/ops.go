@@ -139,8 +139,8 @@ type DeleteManifestRequestLabelSelector struct {
 }
 
 type DeleteManifestRequestOptions struct {
-	OrphanDependants   bool `json:"orphanDependants"`
-	GracePeriodSeconds int  `json:"gracePeriodSeconds"`
+	Cascading          bool   `json:"cascading"`
+	GracePeriodSeconds *int64 `json:"gracePeriodSeconds"`
 }
 
 type UndoRolloutManifestRequest struct {
