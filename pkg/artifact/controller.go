@@ -9,7 +9,7 @@ import (
 
 	"github.com/billiford/go-clouddriver/pkg/helm"
 	"github.com/gin-gonic/gin"
-	// "github.com/google/go-github/v32/github"
+	"github.com/google/go-github/v32/github"
 )
 
 type Type string
@@ -34,7 +34,7 @@ const (
 type CredentialsController interface {
 	ListArtifactCredentialsNamesAndTypes() []Credentials
 	HelmClientForAccountName(string) (helm.Client, error)
-	// GitClientForAccountName(string) (github.Client, error)
+	GitClientForAccountName(string) (*github.Client, error)
 }
 
 type Credentials struct {
@@ -55,6 +55,7 @@ func NewCredentialsController(dir string) (CredentialsController, error) {
 	cc := credentialsController{
 		artifactCredentials: []Credentials{},
 		helmClients:         map[string]helm.Client{},
+		gitClients:          map[string]*github.Client{},
 	}
 
 	files, err := ioutil.ReadDir(dir)
@@ -110,6 +111,9 @@ func NewCredentialsController(dir string) (CredentialsController, error) {
 
 					helmClient := helm.NewClient(ac.Repository)
 					cc.helmClients[ac.Name] = helmClient
+				case TypeGithubFile:
+					gitClient := github.NewClient(nil)
+					cc.gitClients[ac.Name] = gitClient
 				}
 			}
 
@@ -123,6 +127,7 @@ func NewCredentialsController(dir string) (CredentialsController, error) {
 type credentialsController struct {
 	artifactCredentials []Credentials
 	helmClients         map[string]helm.Client
+	gitClients          map[string]*github.Client
 }
 
 // There might be confidential info stored in a artifacts credentials, so we need to be careful
@@ -147,6 +152,14 @@ func (cc *credentialsController) HelmClientForAccountName(accountName string) (h
 	}
 
 	return cc.helmClients[accountName], nil
+}
+
+func (cc *credentialsController) GitClientForAccountName(accountName string) (*github.Client, error) {
+	if _, ok := cc.gitClients[accountName]; !ok {
+		return nil, fmt.Errorf("git account %s not found", accountName)
+	}
+
+	return cc.gitClients[accountName], nil
 }
 
 func CredentialsControllerInstance(c *gin.Context) CredentialsController {
