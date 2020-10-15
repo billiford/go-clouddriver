@@ -1,15 +1,18 @@
 package artifact
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"net/http"
 	"path/filepath"
 	"strings"
 
 	"github.com/billiford/go-clouddriver/pkg/helm"
 	"github.com/gin-gonic/gin"
 	"github.com/google/go-github/v32/github"
+	"golang.org/x/oauth2"
 )
 
 type Type string
@@ -38,9 +41,15 @@ type CredentialsController interface {
 }
 
 type Credentials struct {
-	Name       string `json:"name"`
-	Types      []Type `json:"types"`
+	// General config.
+	Name  string `json:"name"`
+	Types []Type `json:"types"`
+	// Helm repository config.
 	Repository string `json:"repository,omitempty"`
+	// Github config.
+	BaseURL    string `json:"baseURL,omitempty"`
+	Token      string `json:"token,omitempty"`
+	Enterprise bool   `json:"enterprise,omitempty"`
 }
 
 var (
@@ -112,8 +121,31 @@ func NewCredentialsController(dir string) (CredentialsController, error) {
 					helmClient := helm.NewClient(ac.Repository)
 					cc.helmClients[ac.Name] = helmClient
 				case TypeGithubFile:
-					gitClient := github.NewClient(nil)
-					cc.gitClients[ac.Name] = gitClient
+					var tc *http.Client
+
+					if ac.Token != "" {
+						ctx := context.Background()
+						ts := oauth2.StaticTokenSource(
+							&oauth2.Token{AccessToken: ac.Token},
+						)
+						tc = oauth2.NewClient(ctx, ts)
+					}
+
+					if ac.Enterprise {
+						if ac.BaseURL == "" {
+							return nil, fmt.Errorf("github file %s missing required \"baseURL\" attribute", ac.Name)
+						}
+
+						gitClient, err := github.NewEnterpriseClient(ac.BaseURL, ac.BaseURL, tc)
+						if err != nil {
+							return nil, err
+						}
+
+						cc.gitClients[ac.Name] = gitClient
+					} else {
+						gitClient := github.NewClient(tc)
+						cc.gitClients[ac.Name] = gitClient
+					}
 				}
 			}
 
