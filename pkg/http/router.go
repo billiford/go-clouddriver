@@ -21,12 +21,40 @@ func Initialize(r *gin.Engine) {
 		api.GET("/credentials/:account", core.GetAccountCredentials)
 
 		// Applications API controller.
+		//
+		// https://github.com/spinnaker/clouddriver/blob/master/clouddriver-web/src/main/groovy/com/netflix/spinnaker/clouddriver/controllers/ApplicationsController.groovy#L38
+		// @PreAuthorize("#restricted ? @fiatPermissionEvaluator.storeWholePermission() : true")
+		// @PostFilter("#restricted ? hasPermission(filterObject.name, 'APPLICATION', 'READ') : true")
 		api.GET("/applications", core.ListApplications)
+
+		// https://github.com/spinnaker/clouddriver/blob/master/clouddriver-web/src/main/groovy/com/netflix/spinnaker/clouddriver/controllers/ServerGroupManagerController.java#L39
+		// @PreAuthorize("hasPermission(#application, 'APPLICATION', 'READ')")
+		// @PostFilter("hasPermission(filterObject.account, 'ACCOUNT', 'READ')")
 		api.GET("/applications/:application/serverGroupManagers", core.ListServerGroupManagers)
+
+		// https://github.com/spinnaker/clouddriver/blob/master/clouddriver-web/src/main/groovy/com/netflix/spinnaker/clouddriver/controllers/ServerGroupController.groovy#L172
+		// @PreAuthorize("hasPermission(#application, 'APPLICATION', 'READ')")
+		// @PostAuthorize("@authorizationSupport.filterForAccounts(returnObject)")
 		api.GET("/applications/:application/serverGroups", core.ListServerGroups)
+
+		// https://github.com/spinnaker/clouddriver/blob/master/clouddriver-web/src/main/groovy/com/netflix/spinnaker/clouddriver/controllers/ServerGroupController.groovy#L75
+		// @PreAuthorize("hasPermission(#account, 'ACCOUNT', 'READ')")
+		// @PostAuthorize("hasPermission(returnObject?.moniker?.app, 'APPLICATION', 'READ')")
 		api.GET("/applications/:application/serverGroups/:account/:location/:name", core.GetServerGroup)
+
+		// https: //github.com/spinnaker/clouddriver/blob/master/clouddriver-web/src/main/groovy/com/netflix/spinnaker/clouddriver/controllers/LoadBalancerController.groovy#L42
+		// @PreAuthorize("hasPermission(#application, 'APPLICATION', 'READ')")
+		// @PostAuthorize("@authorizationSupport.filterForAccounts(returnObject)")
 		api.GET("/applications/:application/loadBalancers", core.ListLoadBalancers)
+
+		// https://github.com/spinnaker/clouddriver/blob/master/clouddriver-web/src/main/groovy/com/netflix/spinnaker/clouddriver/controllers/ClusterController.groovy#L44
+		// @PreAuthorize("@fiatPermissionEvaluator.storeWholePermission() and hasPermission(#application, 'APPLICATION', 'READ')")
+		// @PostAuthorize("@authorizationSupport.filterForAccounts(returnObject)")
 		api.GET("/applications/:application/clusters", core.ListClusters)
+
+		// https://github.com/spinnaker/clouddriver/blob/master/clouddriver-web/src/main/groovy/com/netflix/spinnaker/clouddriver/controllers/JobController.groovy#L35
+		// @PreAuthorize("hasPermission(#application, 'APPLICATION', 'READ') and hasPermission(#account, 'ACCOUNT', 'READ')")
+		// @ApiOperation(value = "Collect a JobStatus", notes = "Collects the output of the job.")
 		api.GET("/applications/:application/jobs/:account/:location/:name", core.GetJob)
 
 		// Create a kubernetes operation - deploy/delete/scale manifest.

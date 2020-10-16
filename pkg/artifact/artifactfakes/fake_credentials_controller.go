@@ -9,15 +9,6 @@ import (
 )
 
 type FakeCredentialsController struct {
-	ListArtifactCredentialsNamesAndTypesStub        func() []artifact.Credentials
-	listArtifactCredentialsNamesAndTypesMutex       sync.RWMutex
-	listArtifactCredentialsNamesAndTypesArgsForCall []struct{}
-	listArtifactCredentialsNamesAndTypesReturns     struct {
-		result1 []artifact.Credentials
-	}
-	listArtifactCredentialsNamesAndTypesReturnsOnCall map[int]struct {
-		result1 []artifact.Credentials
-	}
 	HelmClientForAccountNameStub        func(string) (helm.Client, error)
 	helmClientForAccountNameMutex       sync.RWMutex
 	helmClientForAccountNameArgsForCall []struct {
@@ -31,48 +22,18 @@ type FakeCredentialsController struct {
 		result1 helm.Client
 		result2 error
 	}
+	ListArtifactCredentialsNamesAndTypesStub        func() []artifact.Credentials
+	listArtifactCredentialsNamesAndTypesMutex       sync.RWMutex
+	listArtifactCredentialsNamesAndTypesArgsForCall []struct {
+	}
+	listArtifactCredentialsNamesAndTypesReturns struct {
+		result1 []artifact.Credentials
+	}
+	listArtifactCredentialsNamesAndTypesReturnsOnCall map[int]struct {
+		result1 []artifact.Credentials
+	}
 	invocations      map[string][][]interface{}
 	invocationsMutex sync.RWMutex
-}
-
-func (fake *FakeCredentialsController) ListArtifactCredentialsNamesAndTypes() []artifact.Credentials {
-	fake.listArtifactCredentialsNamesAndTypesMutex.Lock()
-	ret, specificReturn := fake.listArtifactCredentialsNamesAndTypesReturnsOnCall[len(fake.listArtifactCredentialsNamesAndTypesArgsForCall)]
-	fake.listArtifactCredentialsNamesAndTypesArgsForCall = append(fake.listArtifactCredentialsNamesAndTypesArgsForCall, struct{}{})
-	fake.recordInvocation("ListArtifactCredentialsNamesAndTypes", []interface{}{})
-	fake.listArtifactCredentialsNamesAndTypesMutex.Unlock()
-	if fake.ListArtifactCredentialsNamesAndTypesStub != nil {
-		return fake.ListArtifactCredentialsNamesAndTypesStub()
-	}
-	if specificReturn {
-		return ret.result1
-	}
-	return fake.listArtifactCredentialsNamesAndTypesReturns.result1
-}
-
-func (fake *FakeCredentialsController) ListArtifactCredentialsNamesAndTypesCallCount() int {
-	fake.listArtifactCredentialsNamesAndTypesMutex.RLock()
-	defer fake.listArtifactCredentialsNamesAndTypesMutex.RUnlock()
-	return len(fake.listArtifactCredentialsNamesAndTypesArgsForCall)
-}
-
-func (fake *FakeCredentialsController) ListArtifactCredentialsNamesAndTypesReturns(result1 []artifact.Credentials) {
-	fake.ListArtifactCredentialsNamesAndTypesStub = nil
-	fake.listArtifactCredentialsNamesAndTypesReturns = struct {
-		result1 []artifact.Credentials
-	}{result1}
-}
-
-func (fake *FakeCredentialsController) ListArtifactCredentialsNamesAndTypesReturnsOnCall(i int, result1 []artifact.Credentials) {
-	fake.ListArtifactCredentialsNamesAndTypesStub = nil
-	if fake.listArtifactCredentialsNamesAndTypesReturnsOnCall == nil {
-		fake.listArtifactCredentialsNamesAndTypesReturnsOnCall = make(map[int]struct {
-			result1 []artifact.Credentials
-		})
-	}
-	fake.listArtifactCredentialsNamesAndTypesReturnsOnCall[i] = struct {
-		result1 []artifact.Credentials
-	}{result1}
 }
 
 func (fake *FakeCredentialsController) HelmClientForAccountName(arg1 string) (helm.Client, error) {
@@ -89,7 +50,8 @@ func (fake *FakeCredentialsController) HelmClientForAccountName(arg1 string) (he
 	if specificReturn {
 		return ret.result1, ret.result2
 	}
-	return fake.helmClientForAccountNameReturns.result1, fake.helmClientForAccountNameReturns.result2
+	fakeReturns := fake.helmClientForAccountNameReturns
+	return fakeReturns.result1, fakeReturns.result2
 }
 
 func (fake *FakeCredentialsController) HelmClientForAccountNameCallCount() int {
@@ -98,13 +60,22 @@ func (fake *FakeCredentialsController) HelmClientForAccountNameCallCount() int {
 	return len(fake.helmClientForAccountNameArgsForCall)
 }
 
+func (fake *FakeCredentialsController) HelmClientForAccountNameCalls(stub func(string) (helm.Client, error)) {
+	fake.helmClientForAccountNameMutex.Lock()
+	defer fake.helmClientForAccountNameMutex.Unlock()
+	fake.HelmClientForAccountNameStub = stub
+}
+
 func (fake *FakeCredentialsController) HelmClientForAccountNameArgsForCall(i int) string {
 	fake.helmClientForAccountNameMutex.RLock()
 	defer fake.helmClientForAccountNameMutex.RUnlock()
-	return fake.helmClientForAccountNameArgsForCall[i].arg1
+	argsForCall := fake.helmClientForAccountNameArgsForCall[i]
+	return argsForCall.arg1
 }
 
 func (fake *FakeCredentialsController) HelmClientForAccountNameReturns(result1 helm.Client, result2 error) {
+	fake.helmClientForAccountNameMutex.Lock()
+	defer fake.helmClientForAccountNameMutex.Unlock()
 	fake.HelmClientForAccountNameStub = nil
 	fake.helmClientForAccountNameReturns = struct {
 		result1 helm.Client
@@ -113,6 +84,8 @@ func (fake *FakeCredentialsController) HelmClientForAccountNameReturns(result1 h
 }
 
 func (fake *FakeCredentialsController) HelmClientForAccountNameReturnsOnCall(i int, result1 helm.Client, result2 error) {
+	fake.helmClientForAccountNameMutex.Lock()
+	defer fake.helmClientForAccountNameMutex.Unlock()
 	fake.HelmClientForAccountNameStub = nil
 	if fake.helmClientForAccountNameReturnsOnCall == nil {
 		fake.helmClientForAccountNameReturnsOnCall = make(map[int]struct {
@@ -126,13 +99,65 @@ func (fake *FakeCredentialsController) HelmClientForAccountNameReturnsOnCall(i i
 	}{result1, result2}
 }
 
+func (fake *FakeCredentialsController) ListArtifactCredentialsNamesAndTypes() []artifact.Credentials {
+	fake.listArtifactCredentialsNamesAndTypesMutex.Lock()
+	ret, specificReturn := fake.listArtifactCredentialsNamesAndTypesReturnsOnCall[len(fake.listArtifactCredentialsNamesAndTypesArgsForCall)]
+	fake.listArtifactCredentialsNamesAndTypesArgsForCall = append(fake.listArtifactCredentialsNamesAndTypesArgsForCall, struct {
+	}{})
+	fake.recordInvocation("ListArtifactCredentialsNamesAndTypes", []interface{}{})
+	fake.listArtifactCredentialsNamesAndTypesMutex.Unlock()
+	if fake.ListArtifactCredentialsNamesAndTypesStub != nil {
+		return fake.ListArtifactCredentialsNamesAndTypesStub()
+	}
+	if specificReturn {
+		return ret.result1
+	}
+	fakeReturns := fake.listArtifactCredentialsNamesAndTypesReturns
+	return fakeReturns.result1
+}
+
+func (fake *FakeCredentialsController) ListArtifactCredentialsNamesAndTypesCallCount() int {
+	fake.listArtifactCredentialsNamesAndTypesMutex.RLock()
+	defer fake.listArtifactCredentialsNamesAndTypesMutex.RUnlock()
+	return len(fake.listArtifactCredentialsNamesAndTypesArgsForCall)
+}
+
+func (fake *FakeCredentialsController) ListArtifactCredentialsNamesAndTypesCalls(stub func() []artifact.Credentials) {
+	fake.listArtifactCredentialsNamesAndTypesMutex.Lock()
+	defer fake.listArtifactCredentialsNamesAndTypesMutex.Unlock()
+	fake.ListArtifactCredentialsNamesAndTypesStub = stub
+}
+
+func (fake *FakeCredentialsController) ListArtifactCredentialsNamesAndTypesReturns(result1 []artifact.Credentials) {
+	fake.listArtifactCredentialsNamesAndTypesMutex.Lock()
+	defer fake.listArtifactCredentialsNamesAndTypesMutex.Unlock()
+	fake.ListArtifactCredentialsNamesAndTypesStub = nil
+	fake.listArtifactCredentialsNamesAndTypesReturns = struct {
+		result1 []artifact.Credentials
+	}{result1}
+}
+
+func (fake *FakeCredentialsController) ListArtifactCredentialsNamesAndTypesReturnsOnCall(i int, result1 []artifact.Credentials) {
+	fake.listArtifactCredentialsNamesAndTypesMutex.Lock()
+	defer fake.listArtifactCredentialsNamesAndTypesMutex.Unlock()
+	fake.ListArtifactCredentialsNamesAndTypesStub = nil
+	if fake.listArtifactCredentialsNamesAndTypesReturnsOnCall == nil {
+		fake.listArtifactCredentialsNamesAndTypesReturnsOnCall = make(map[int]struct {
+			result1 []artifact.Credentials
+		})
+	}
+	fake.listArtifactCredentialsNamesAndTypesReturnsOnCall[i] = struct {
+		result1 []artifact.Credentials
+	}{result1}
+}
+
 func (fake *FakeCredentialsController) Invocations() map[string][][]interface{} {
 	fake.invocationsMutex.RLock()
 	defer fake.invocationsMutex.RUnlock()
-	fake.listArtifactCredentialsNamesAndTypesMutex.RLock()
-	defer fake.listArtifactCredentialsNamesAndTypesMutex.RUnlock()
 	fake.helmClientForAccountNameMutex.RLock()
 	defer fake.helmClientForAccountNameMutex.RUnlock()
+	fake.listArtifactCredentialsNamesAndTypesMutex.RLock()
+	defer fake.listArtifactCredentialsNamesAndTypesMutex.RUnlock()
 	copiedInvocations := map[string][][]interface{}{}
 	for key, value := range fake.invocations {
 		copiedInvocations[key] = value
