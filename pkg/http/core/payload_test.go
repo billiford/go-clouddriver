@@ -98,6 +98,18 @@ const payloadRequestFetchNotImplementedArtifact = `{
   "type": "unknown/type"
 }`
 
+const payloadRequestKubernetesOpsDeleteManifest = `[
+  {
+    "deleteManifest": {}
+  }
+]`
+
+const payloadRequestKubernetesOpsCleanupArtifacts = `[
+  {
+    "cleanupArtifacts": {}
+  }
+]`
+
 const payloadRequestKubernetesOpsScaleManifest = `[
   {
     "scaleManifest": {
@@ -347,6 +359,12 @@ const payloadRequestKubernetesOpsUndoRolloutManifest = `[
       "skipExpressionEvaluation": false,
       "requiredArtifacts": []
     }
+  }
+]`
+
+const payloadRequestKubernetesOpsPatchManifest = `[
+  {
+    "patchManifest": {}
   }
 ]`
 

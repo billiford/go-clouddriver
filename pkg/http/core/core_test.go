@@ -113,7 +113,10 @@ func setup() {
 	fakeAction = &kubefakes.FakeAction{}
 
 	fakeKubeActionHandler = &kubefakes.FakeActionHandler{}
+	fakeKubeActionHandler.NewCleanupArtifactsActionReturns(fakeAction)
+	fakeKubeActionHandler.NewDeleteManifestActionReturns(fakeAction)
 	fakeKubeActionHandler.NewDeployManifestActionReturns(fakeAction)
+	fakeKubeActionHandler.NewPatchManifestActionReturns(fakeAction)
 	fakeKubeActionHandler.NewScaleManifestActionReturns(fakeAction)
 	fakeKubeActionHandler.NewRollingRestartActionReturns(fakeAction)
 	fakeKubeActionHandler.NewRollbackActionReturns(fakeAction)
