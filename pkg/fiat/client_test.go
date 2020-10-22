@@ -34,7 +34,6 @@ var _ = Describe("Client", func() {
 			client = NewDefaultClient()
 		})
 
-		//This does nothing, ask Billy why it was added to othe clients?
 		It("succeeds", func() {
 		})
 	})

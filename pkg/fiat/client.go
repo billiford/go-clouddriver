@@ -7,6 +7,8 @@ import (
 	"net/http"
 )
 
+const fiatUrl = "http://localhost:7003"
+
 //go:generate counterfeiter . Client
 type Client interface {
 	Authorize(account string) (Response, error)
@@ -19,9 +21,7 @@ func NewClient(url string) Client {
 }
 
 func NewDefaultClient() Client {
-	return &client{
-		url: "http://localhost:7003",
-	}
+	return NewClient(fiatUrl)
 }
 
 type client struct {
