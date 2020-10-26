@@ -3,19 +3,32 @@ package kubernetes_test
 import (
 	"errors"
 
-	"github.com/billiford/go-clouddriver/pkg/kubernetes"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+
+	"github.com/billiford/go-clouddriver/pkg/kubernetes"
 )
 
-var _ = Describe("Patch", func() {
+var _ = Describe("Cleanup", func() {
 	BeforeEach(func() {
 		setup()
 	})
 
 	JustBeforeEach(func() {
-		action = actionHandler.NewPatchManifestAction(actionConfig)
+		action = actionHandler.NewCleanupArtifactsAction(actionConfig)
 		err = action.Run()
+	})
+
+	When("getting the unstructured manifest returns an error", func() {
+		BeforeEach(func() {
+			fakeKubeController.ToUnstructuredReturns(nil, errors.New("error converting to unstructured"))
+		})
+
+		It("returns an error", func() {
+			Expect(err).ToNot(BeNil())
+			Expect(err.Error()).To(Equal("error converting to unstructured"))
+		})
 	})
 
 	When("getting the provider returns an error", func() {
@@ -62,14 +75,14 @@ var _ = Describe("Patch", func() {
 		})
 	})
 
-	When("patching the manifest returns an error", func() {
+	When("getting the gvr returns an error", func() {
 		BeforeEach(func() {
-			fakeKubeClient.PatchUsingStrategyReturns(kubernetes.Metadata{}, nil, errors.New("error patching manifest"))
+			fakeKubeClient.GVRForKindReturns(schema.GroupVersionResource{}, errors.New("error getting gvr"))
 		})
 
 		It("returns an error", func() {
 			Expect(err).ToNot(BeNil())
-			Expect(err.Error()).To(Equal("error patching manifest"))
+			Expect(err.Error()).To(Equal("error getting gvr"))
 		})
 	})
 
@@ -84,48 +97,7 @@ var _ = Describe("Patch", func() {
 		})
 	})
 
-	Context("merge strategies", func() {
-		Context("strategic patch type", func() {
-			BeforeEach(func() {
-				actionConfig.Operation.PatchManifest.Options.MergeStrategy = "strategic"
-			})
-
-			It("succeeds", func() {
-				Expect(err).To(BeNil())
-			})
-		})
-
-		Context("json patch type", func() {
-			BeforeEach(func() {
-				actionConfig.Operation.PatchManifest.Options.MergeStrategy = "json"
-			})
-
-			It("succeeds", func() {
-				Expect(err).To(BeNil())
-			})
-		})
-
-		Context("merge patch type", func() {
-			BeforeEach(func() {
-				actionConfig.Operation.PatchManifest.Options.MergeStrategy = "merge"
-			})
-
-			It("succeeds", func() {
-				Expect(err).To(BeNil())
-			})
-		})
-
-		Context("unknown patch type", func() {
-			BeforeEach(func() {
-				actionConfig.Operation.PatchManifest.Options.MergeStrategy = "unknown"
-			})
-
-			It("returns an error", func() {
-				Expect(err).ToNot(BeNil())
-				Expect(err.Error()).To(Equal("invalid merge strategy unknown"))
-			})
-		})
-
+	When("it succeeds", func() {
 		It("succeeds", func() {
 			Expect(err).To(BeNil())
 		})

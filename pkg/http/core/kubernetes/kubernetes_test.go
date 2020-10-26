@@ -87,7 +87,15 @@ func newActionConfig() ActionConfig {
 				Replicas:     "16",
 				ManifestName: "deployment test-deployment",
 			},
-			CleanupArtifacts: &CleanupArtifactsRequest{},
+			CleanupArtifacts: &CleanupArtifactsRequest{
+				Account: "test-account",
+				Manifests: []map[string]interface{}{
+					{
+						"kind":       "Pod",
+						"apiVersion": "v1",
+					},
+				},
+			},
 			DeleteManifest: &DeleteManifestRequest{
 				Location:     "test-namespace",
 				Mode:         "static",
@@ -107,7 +115,7 @@ func newActionConfig() ActionConfig {
 			PatchManifest: &PatchManifestRequest{
 				ManifestName: "deployment test-deployment",
 				Options: PatchManifestRequestOptions{
-					MergeStrategy: "json",
+					MergeStrategy: "strategic",
 				},
 			},
 			RunJob: &RunJobRequest{
