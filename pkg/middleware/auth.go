@@ -8,13 +8,18 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+const (
+	user = `X-Spinnaker-User`
+	app  = `X-Spinnaker-Application`
+)
+
 //authApplication takes a list of permissions
 //authAccount takes a list of accounts
 
 func AuthApplication(permissions ...string) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		user := c.GetHeader("Spinnaker-User")
-		app := c.GetHeader("X-Spinnaker-Application")
+		user := c.GetHeader(user)
+		app := c.GetHeader(app)
 
 		if user == "" || app == "" {
 			c.Next()
