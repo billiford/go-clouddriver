@@ -7,7 +7,10 @@ import (
 	"net/http"
 )
 
-const fiatUrl = "http://spin-fiat.spinnaker:7003"
+const (
+	ClientInstanceKey = `FiatClient`
+	fiatUrl           = "http://spin-fiat.spinnaker:7003"
+)
 
 //go:generate counterfeiter . Client
 type Client interface {

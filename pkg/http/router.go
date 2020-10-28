@@ -3,6 +3,7 @@ package http
 import (
 	"github.com/billiford/go-clouddriver/pkg/http/core"
 	v1 "github.com/billiford/go-clouddriver/pkg/http/v1"
+	"github.com/billiford/go-clouddriver/pkg/middleware"
 	"github.com/gin-gonic/gin"
 )
 
@@ -25,17 +26,19 @@ func Initialize(r *gin.Engine) {
 		// https://github.com/spinnaker/clouddriver/blob/master/clouddriver-web/src/main/groovy/com/netflix/spinnaker/clouddriver/controllers/ApplicationsController.groovy#L38
 		// @PreAuthorize("#restricted ? @fiatPermissionEvaluator.storeWholePermission() : true")
 		// @PostFilter("#restricted ? hasPermission(filterObject.name, 'APPLICATION', 'READ') : true")
+		// middleware.authApplication()
 		api.GET("/applications", core.ListApplications)
 
 		// https://github.com/spinnaker/clouddriver/blob/master/clouddriver-web/src/main/groovy/com/netflix/spinnaker/clouddriver/controllers/ServerGroupManagerController.java#L39
 		// @PreAuthorize("hasPermission(#application, 'APPLICATION', 'READ')")
 		// @PostFilter("hasPermission(filterObject.account, 'ACCOUNT', 'READ')")
-		api.GET("/applications/:application/serverGroupManagers", core.ListServerGroupManagers)
+		appPermissions := middleware.NewPermissions([]string{"READ"})
+		api.GET("/applications/:application/serverGroupManagers", appPermissions.AuthApplication(), core.ListServerGroupManagers)
 
 		// https://github.com/spinnaker/clouddriver/blob/master/clouddriver-web/src/main/groovy/com/netflix/spinnaker/clouddriver/controllers/ServerGroupController.groovy#L172
 		// @PreAuthorize("hasPermission(#application, 'APPLICATION', 'READ')")
 		// @PostAuthorize("@authorizationSupport.filterForAccounts(returnObject)")
-		api.GET("/applications/:application/serverGroups", core.ListServerGroups)
+		api.GET("/applications/:application/serverGroups", appPermissions.AuthApplication(), core.ListServerGroups)
 
 		// https://github.com/spinnaker/clouddriver/blob/master/clouddriver-web/src/main/groovy/com/netflix/spinnaker/clouddriver/controllers/ServerGroupController.groovy#L75
 		// @PreAuthorize("hasPermission(#account, 'ACCOUNT', 'READ')")
@@ -45,7 +48,7 @@ func Initialize(r *gin.Engine) {
 		// https: //github.com/spinnaker/clouddriver/blob/master/clouddriver-web/src/main/groovy/com/netflix/spinnaker/clouddriver/controllers/LoadBalancerController.groovy#L42
 		// @PreAuthorize("hasPermission(#application, 'APPLICATION', 'READ')")
 		// @PostAuthorize("@authorizationSupport.filterForAccounts(returnObject)")
-		api.GET("/applications/:application/loadBalancers", core.ListLoadBalancers)
+		api.GET("/applications/:application/loadBalancers", appPermissions.AuthApplication(), core.ListLoadBalancers)
 
 		// https://github.com/spinnaker/clouddriver/blob/master/clouddriver-web/src/main/groovy/com/netflix/spinnaker/clouddriver/controllers/ClusterController.groovy#L44
 		// @PreAuthorize("@fiatPermissionEvaluator.storeWholePermission() and hasPermission(#application, 'APPLICATION', 'READ')")
@@ -55,7 +58,7 @@ func Initialize(r *gin.Engine) {
 		// https://github.com/spinnaker/clouddriver/blob/master/clouddriver-web/src/main/groovy/com/netflix/spinnaker/clouddriver/controllers/JobController.groovy#L35
 		// @PreAuthorize("hasPermission(#application, 'APPLICATION', 'READ') and hasPermission(#account, 'ACCOUNT', 'READ')")
 		// @ApiOperation(value = "Collect a JobStatus", notes = "Collects the output of the job.")
-		api.GET("/applications/:application/jobs/:account/:location/:name", core.GetJob)
+		api.GET("/applications/:application/jobs/:account/:location/:name", appPermissions.AuthApplication(), core.GetJob)
 
 		// Create a kubernetes operation - deploy/delete/scale manifest.
 		api.POST("/kubernetes/ops", core.CreateKubernetesOperation)
