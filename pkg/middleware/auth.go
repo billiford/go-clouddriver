@@ -9,31 +9,19 @@ import (
 )
 
 //authApplication takes a list of permissions
-//authAccount
-//go:generate counterfeiter . Auth
-type Auth interface {
-	AuthApplication() gin.HandlerFunc
-}
+//authAccount takes a list of accounts
 
-type permissions struct {
-	list []string
-}
-
-func NewPermissions(list []string) permissions {
-	return permissions{list: list}
-}
-
-func (p *permissions) AuthApplication() gin.HandlerFunc {
+func AuthApplication(permissions ...string) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		user := c.GetHeader("user")
-		app := c.GetHeader("application")
+		user := c.GetHeader("Spinnaker-User")
+		app := c.GetHeader("X-Spinnaker-Application")
 
-		if len(user) == 0 || len(app) == 0 {
+		if user == "" || app == "" {
 			c.Next()
 			return
 		}
 
-		fiatClient := fiat.NewDefaultClient()
+		fiatClient := fiat.Instance(c)
 		authResp, err := fiatClient.Authorize(user)
 		if err != nil {
 			clouddriver.WriteError(c, http.StatusUnauthorized, err)
@@ -42,10 +30,10 @@ func (p *permissions) AuthApplication() gin.HandlerFunc {
 		applicationsAuth := authResp.Applications
 		for _, auth := range applicationsAuth {
 			if auth.Name == app {
-				for _, permission := range p.list {
-					_, found := Find(auth.Authorizations, permission)
+				for _, p := range permissions {
+					found := find(auth.Authorizations, p)
 					if !found {
-						clouddriver.WriteError(c, http.StatusForbidden, err)
+						clouddriver.WriteError(c, http.StatusForbidden, nil)
 						return
 					}
 				}
@@ -55,11 +43,11 @@ func (p *permissions) AuthApplication() gin.HandlerFunc {
 	}
 }
 
-func Find(slice []string, val string) (int, bool) {
-	for i, item := range slice {
+func find(slice []string, val string) bool {
+	for _, item := range slice {
 		if item == val {
-			return i, true
+			return true
 		}
 	}
-	return -1, false
+	return false
 }

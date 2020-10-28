@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+
+	"github.com/gin-gonic/gin"
 )
 
 const (
@@ -85,4 +87,8 @@ func (c *client) Authorize(account string) (Response, error) {
 		return response, err
 	}
 	return response, nil
+}
+
+func Instance(c *gin.Context) Client {
+	return c.MustGet(ClientInstanceKey).(Client)
 }
