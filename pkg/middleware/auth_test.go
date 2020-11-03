@@ -76,6 +76,7 @@ var _ = Describe("Auth", func() {
 
 			It("returns status unauthorized", func() {
 				Expect(c.Writer.Status()).To(Equal(http.StatusUnauthorized))
+				Expect(c.Errors[0].Error()).To(Equal("fake error"))
 			})
 		})
 
@@ -93,6 +94,7 @@ var _ = Describe("Auth", func() {
 
 			It("returns status Forbidden", func() {
 				Expect(c.Writer.Status()).To(Equal(http.StatusForbidden))
+				Expect(c.Errors[0].Error()).To(Equal("Access denied to application test-application - required authorization: WRITE"))
 			})
 		})
 
@@ -165,6 +167,7 @@ var _ = Describe("Auth", func() {
 
 			It("returns status unauthorized", func() {
 				Expect(c.Writer.Status()).To(Equal(http.StatusUnauthorized))
+				Expect(c.Errors[0].Error()).To(Equal("fake error"))
 			})
 		})
 
@@ -182,6 +185,7 @@ var _ = Describe("Auth", func() {
 
 			It("returns status Forbidden", func() {
 				Expect(c.Writer.Status()).To(Equal(http.StatusForbidden))
+				Expect(c.Errors[0].Error()).To(Equal("Access denied to account test-account - required authorization: WRITE"))
 			})
 		})
 
