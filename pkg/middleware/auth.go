@@ -1,7 +1,7 @@
 package middleware
 
 import (
-	"errors"
+	"fmt"
 	"net/http"
 
 	clouddriver "github.com/billiford/go-clouddriver/pkg"
@@ -40,7 +40,7 @@ func AuthApplication(permissions ...string) gin.HandlerFunc {
 				for _, p := range permissions {
 					found := find(auth.Authorizations, p)
 					if !found {
-						clouddriver.WriteError(c, http.StatusForbidden, errors.New("user unauthorized"))
+						clouddriver.WriteError(c, http.StatusForbidden, fmt.Errorf("Access denied to application %s - required authorization: %s", app, auth.Authorizations))
 						return
 					}
 				}
@@ -72,7 +72,7 @@ func AuthAccount(permissions ...string) gin.HandlerFunc {
 				for _, p := range permissions {
 					found := find(auth.Authorizations, p)
 					if !found {
-						clouddriver.WriteError(c, http.StatusForbidden, errors.New("user unauthorized"))
+						clouddriver.WriteError(c, http.StatusForbidden, fmt.Errorf("Access denied to account %s - required authorization: %s", account, auth.Authorizations))
 						return
 					}
 				}
