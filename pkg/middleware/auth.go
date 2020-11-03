@@ -47,7 +47,6 @@ func AuthApplication(permissions ...string) gin.HandlerFunc {
 			}
 		}
 		c.Next()
-		return
 	}
 }
 
@@ -83,7 +82,6 @@ func AuthAccount(permissions ...string) gin.HandlerFunc {
 		}
 
 		c.Next()
-		return
 	}
 }
 
