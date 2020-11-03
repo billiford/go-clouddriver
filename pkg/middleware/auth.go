@@ -54,19 +54,21 @@ func AuthAccount(permissions ...string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		user := c.GetHeader(headerSpinnakerUser)
 		account := c.Param("account")
+		fiatClient := fiat.Instance(c)
 
 		if user == "" || account == "" {
 			c.Next()
 			return
 		}
 
-		fiatClient := fiat.Instance(c)
 		authResp, err := fiatClient.Authorize(user)
 		if err != nil {
 			clouddriver.WriteError(c, http.StatusUnauthorized, err)
 			return
 		}
+
 		accountsAuth := authResp.Accounts
+
 		for _, auth := range accountsAuth {
 			if auth.Name == account {
 				for _, p := range permissions {
@@ -78,6 +80,7 @@ func AuthAccount(permissions ...string) gin.HandlerFunc {
 				}
 			}
 		}
+
 		c.Next()
 	}
 }
