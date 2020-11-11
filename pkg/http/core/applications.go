@@ -118,6 +118,7 @@ type ServerGroupManager struct {
 	Manifest      map[string]interface{}          `json:"manifest"`
 	Moniker       Moniker                         `json:"moniker"`
 	Name          string                          `json:"name"`
+	DisplayName   string                          `json:"displayName"`
 	Namespace     string                          `json:"namespace"`
 	ProviderType  string                          `json:"providerType"`
 	Region        string                          `json:"region"`
@@ -280,6 +281,7 @@ func newServerGroupManager(deployment unstructured.Unstructured,
 			Cluster: fmt.Sprintf("%s %s", "deployment", deployment.GetName()),
 		},
 		Name:         fmt.Sprintf("%s %s", "deployment", deployment.GetName()),
+		DisplayName:  deployment.GetName(),
 		Namespace:    deployment.GetNamespace(),
 		ProviderType: "kubernetes",
 		Region:       deployment.GetNamespace(),
@@ -333,6 +335,7 @@ type LoadBalancer struct {
 	Labels        map[string]string         `json:"labels,omitempty"`
 	Moniker       Moniker                   `json:"moniker"`
 	Name          string                    `json:"name"`
+	DisplayName   string                    `json:"displayName"`
 	Project       string                    `json:"project,omitempty"`
 	Region        string                    `json:"region"`
 	SelfLink      string                    `json:"selfLink,omitempty"`
@@ -474,6 +477,7 @@ func newLoadBalancer(u unstructured.Unstructured, account, application string) L
 			Cluster: fmt.Sprintf("%s %s", kind, u.GetName()),
 		},
 		Name:        fmt.Sprintf("%s %s", kind, u.GetName()),
+		DisplayName: u.GetName(),
 		Region:      u.GetNamespace(),
 		Type:        "kubernetes",
 		CreatedTime: u.GetCreationTimestamp().Unix() * 1000,
