@@ -1229,6 +1229,7 @@ const payloadListServerGroups = `[
               "cluster": "deployment test-deployment1",
               "createdTime": 1581603123000,
               "disabled": false,
+              "displayName": "test-ds1",
               "instanceCounts": {
                 "down": 0,
                 "outOfService": 0,
@@ -1291,6 +1292,7 @@ const payloadListServerGroups = `[
               "cluster": "deployment test-deployment1",
               "createdTime": 1581603123000,
               "disabled": false,
+              "displayName": "test-rs1",
               "instanceCounts": {
                 "down": 0,
                 "outOfService": 0,
@@ -1382,6 +1384,7 @@ const payloadListServerGroups = `[
               "cluster": "deployment test-deployment1",
               "createdTime": 1581603123000,
               "disabled": false,
+              "displayName": "test-rs1",
               "instanceCounts": {
                 "down": 0,
                 "outOfService": 0,
@@ -2224,6 +2227,7 @@ const payloadGetServerGroup = `{
             "cloudProvider": "kubernetes",
             "createdTime": 1581603123000,
             "disabled": false,
+            "displayName": "test-rs1",
             "instanceCounts": {
               "down": 0,
               "outOfService": 0,

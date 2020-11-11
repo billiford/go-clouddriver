@@ -534,6 +534,7 @@ type ServerGroup struct {
 	Cluster        string            `json:"cluster,omitempty"`
 	CreatedTime    int64             `json:"createdTime"`
 	Disabled       bool              `json:"disabled"`
+	DisplayName    string            `json:"displayName"`
 	InstanceCounts InstanceCounts    `json:"instanceCounts"`
 	Instances      []Instance        `json:"instances"`
 	IsDisabled     bool              `json:"isDisabled"`
@@ -771,6 +772,7 @@ func newServerGroup(result unstructured.Unstructured,
 		},
 		Instances:     instances,
 		IsDisabled:    false,
+		DisplayName:   result.GetName(),
 		LoadBalancers: nil,
 		Moniker: ServerGroupMoniker{
 			App:      app,
@@ -1069,6 +1071,7 @@ func GetServerGroup(c *gin.Context) {
 		CloudProvider:  "kubernetes",
 		CreatedTime:    result.GetCreationTimestamp().Unix() * 1000,
 		Disabled:       false,
+		DisplayName:    result.GetName(),
 		InstanceCounts: instanceCounts,
 		Instances:      instances,
 		Key: Key{
