@@ -30,7 +30,7 @@ func setup() {
 	fakeSQLClient = &sqlfakes.FakeClient{}
 
 	// Disable debug logging.
-	gin.SetMode(gin.ReleaseMode)
+	gin.SetMode(gin.DebugMode)
 
 	// Create new gin instead of using gin.Default().
 	// This disables request logging which we don't want for tests.
