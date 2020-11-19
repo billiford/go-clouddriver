@@ -1,13 +1,17 @@
 package core
 
 import (
+	"archive/tar"
 	"bytes"
+	"compress/gzip"
 	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
+	"regexp"
 	"sort"
 	"strings"
 
@@ -15,6 +19,8 @@ import (
 	"github.com/billiford/go-clouddriver/pkg/artifact"
 	"github.com/gin-gonic/gin"
 )
+
+var matchToFirstSlashRegexp = regexp.MustCompile("^[^/]*/")
 
 func ListArtifactCredentials(c *gin.Context) {
 	cc := artifact.CredentialsControllerInstance(c)
@@ -212,10 +218,143 @@ func GetArtifact(c *gin.Context) {
 			b = []byte(response.Content)
 		}
 
+	case artifact.TypeGitRepo:
+		gc, err := cc.GitRepoClientForAccountName(a.ArtifactAccount)
+		if err != nil {
+			clouddriver.WriteError(c, http.StatusBadRequest, err)
+			return
+		}
+
+		branch := "master"
+		if a.Version != "" {
+			branch = a.Version
+		}
+
+		url := fmt.Sprintf("%s/archive/%s.tar.gz", a.Reference, branch)
+
+		resp, err := gc.Get(url)
+		if err != nil {
+			clouddriver.WriteError(c, http.StatusInternalServerError, err)
+			return
+		}
+		if resp.StatusCode < 200 || resp.StatusCode > 299 {
+			clouddriver.WriteError(c, http.StatusInternalServerError, fmt.Errorf("error getting git/repo (repo: %s, branch/version: %s): %s", a.Reference, branch, resp.Status))
+			return
+		}
+		defer resp.Body.Close()
+
+		rb := []byte{}
+		rb, err = ioutil.ReadAll(resp.Body)
+		if err != nil {
+			clouddriver.WriteError(c, http.StatusInternalServerError, err)
+			return
+		}
+
+		// The git tarball returns the files in a parent directory that Spinnaker does not expect
+		// For example, running this command
+		//
+		//    curl -sL https://github.com/billiford/go-clouddriver/archive/master.tar.gz | tar t -
+		//
+		// Reports this file listing:
+		// go-clouddriver-master/
+		// go-clouddriver-master/.github/
+		// go-clouddriver-master/.github/workflows/
+		// go-clouddriver-master/.github/workflows/go.yml
+		// go-clouddriver-master/.gitignore
+		// go-clouddriver-master/Makefile
+		// ...
+		//
+		// Spinnaker (rosco) expects:
+		// .github/
+		// .github/workflows/
+		// .github/workflows/go.yml
+		// .gitignore
+		// Makefile
+		// ...
+		//
+
+		// New tar archive
+		var tbuf bytes.Buffer
+		tw := tar.NewWriter(&tbuf)
+		defer tw.Close()
+
+		// Uncompress tarball
+		gr, err := gzip.NewReader(bytes.NewBuffer(rb))
+		if err != nil {
+			clouddriver.WriteError(c, http.StatusInternalServerError, err)
+			return
+		}
+		defer gr.Close()
+
+		// Read tar archive
+		tr := tar.NewReader(gr)
+		for {
+			hdr, err := tr.Next()
+			if err == io.EOF {
+				break
+			}
+			if err != nil {
+				clouddriver.WriteError(c, http.StatusInternalServerError, err)
+				return
+			}
+
+			tb, err := ioutil.ReadAll(tr)
+			if err != nil {
+				clouddriver.WriteError(c, http.StatusInternalServerError, err)
+				return
+			}
+
+			// Write to new tar archive
+			hdr.Name = matchToFirstSlashRegexp.ReplaceAllString(hdr.Name, "")
+			if len(hdr.Name) > 0 && strings.HasPrefix(hdr.Name, a.Location) {
+				if err := tw.WriteHeader(hdr); err != nil {
+					clouddriver.WriteError(c, http.StatusInternalServerError, err)
+					return
+				}
+
+				if _, err := tw.Write(tb); err != nil {
+					clouddriver.WriteError(c, http.StatusInternalServerError, err)
+					return
+				}
+
+				if err := tw.Flush(); err != nil {
+					clouddriver.WriteError(c, http.StatusInternalServerError, err)
+					return
+				}
+			}
+		}
+
+		// Compress new tar archive
+		var gbuf bytes.Buffer
+		if err = gzipWrite(&gbuf, tbuf.Bytes()); err != nil {
+			clouddriver.WriteError(c, http.StatusInternalServerError, err)
+			return
+		}
+
+		b = gbuf.Bytes()
+
 	default:
 		clouddriver.WriteError(c, http.StatusNotImplemented, fmt.Errorf("getting artifact of type %s not implemented", a.Type))
 		return
 	}
 
 	c.Writer.Write(b)
+}
+
+// Write gzipped data to a Writer
+func gzipWrite(w io.Writer, data []byte) error {
+	gw, err := gzip.NewWriterLevel(w, gzip.BestCompression)
+	if err != nil {
+		return err
+	}
+
+	defer gw.Close()
+
+	_, err = gw.Write(data)
+	if err != nil {
+		return err
+	}
+
+	err = gw.Flush()
+	return err
 }

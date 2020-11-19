@@ -24,6 +24,19 @@ type FakeCredentialsController struct {
 		result1 *github.Client
 		result2 error
 	}
+	GitRepoClientForAccountNameStub        func(string) (*http.Client, error)
+	gitRepoClientForAccountNameMutex       sync.RWMutex
+	gitRepoClientForAccountNameArgsForCall []struct {
+		arg1 string
+	}
+	gitRepoClientForAccountNameReturns struct {
+		result1 *http.Client
+		result2 error
+	}
+	gitRepoClientForAccountNameReturnsOnCall map[int]struct {
+		result1 *http.Client
+		result2 error
+	}
 	HTTPClientForAccountNameStub        func(string) (*http.Client, error)
 	hTTPClientForAccountNameMutex       sync.RWMutex
 	hTTPClientForAccountNameArgsForCall []struct {
@@ -123,6 +136,69 @@ func (fake *FakeCredentialsController) GitClientForAccountNameReturnsOnCall(i in
 	}
 	fake.gitClientForAccountNameReturnsOnCall[i] = struct {
 		result1 *github.Client
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeCredentialsController) GitRepoClientForAccountName(arg1 string) (*http.Client, error) {
+	fake.gitRepoClientForAccountNameMutex.Lock()
+	ret, specificReturn := fake.gitRepoClientForAccountNameReturnsOnCall[len(fake.gitRepoClientForAccountNameArgsForCall)]
+	fake.gitRepoClientForAccountNameArgsForCall = append(fake.gitRepoClientForAccountNameArgsForCall, struct {
+		arg1 string
+	}{arg1})
+	fake.recordInvocation("GitRepoClientForAccountName", []interface{}{arg1})
+	fake.gitRepoClientForAccountNameMutex.Unlock()
+	if fake.GitRepoClientForAccountNameStub != nil {
+		return fake.GitRepoClientForAccountNameStub(arg1)
+	}
+	if specificReturn {
+		return ret.result1, ret.result2
+	}
+	fakeReturns := fake.gitRepoClientForAccountNameReturns
+	return fakeReturns.result1, fakeReturns.result2
+}
+
+func (fake *FakeCredentialsController) GitRepoClientForAccountNameCallCount() int {
+	fake.gitRepoClientForAccountNameMutex.RLock()
+	defer fake.gitRepoClientForAccountNameMutex.RUnlock()
+	return len(fake.gitRepoClientForAccountNameArgsForCall)
+}
+
+func (fake *FakeCredentialsController) GitRepoClientForAccountNameCalls(stub func(string) (*http.Client, error)) {
+	fake.gitRepoClientForAccountNameMutex.Lock()
+	defer fake.gitRepoClientForAccountNameMutex.Unlock()
+	fake.GitRepoClientForAccountNameStub = stub
+}
+
+func (fake *FakeCredentialsController) GitRepoClientForAccountNameArgsForCall(i int) string {
+	fake.gitRepoClientForAccountNameMutex.RLock()
+	defer fake.gitRepoClientForAccountNameMutex.RUnlock()
+	argsForCall := fake.gitRepoClientForAccountNameArgsForCall[i]
+	return argsForCall.arg1
+}
+
+func (fake *FakeCredentialsController) GitRepoClientForAccountNameReturns(result1 *http.Client, result2 error) {
+	fake.gitRepoClientForAccountNameMutex.Lock()
+	defer fake.gitRepoClientForAccountNameMutex.Unlock()
+	fake.GitRepoClientForAccountNameStub = nil
+	fake.gitRepoClientForAccountNameReturns = struct {
+		result1 *http.Client
+		result2 error
+	}{result1, result2}
+}
+
+func (fake *FakeCredentialsController) GitRepoClientForAccountNameReturnsOnCall(i int, result1 *http.Client, result2 error) {
+	fake.gitRepoClientForAccountNameMutex.Lock()
+	defer fake.gitRepoClientForAccountNameMutex.Unlock()
+	fake.GitRepoClientForAccountNameStub = nil
+	if fake.gitRepoClientForAccountNameReturnsOnCall == nil {
+		fake.gitRepoClientForAccountNameReturnsOnCall = make(map[int]struct {
+			result1 *http.Client
+			result2 error
+		})
+	}
+	fake.gitRepoClientForAccountNameReturnsOnCall[i] = struct {
+		result1 *http.Client
 		result2 error
 	}{result1, result2}
 }
@@ -310,6 +386,8 @@ func (fake *FakeCredentialsController) Invocations() map[string][][]interface{} 
 	defer fake.invocationsMutex.RUnlock()
 	fake.gitClientForAccountNameMutex.RLock()
 	defer fake.gitClientForAccountNameMutex.RUnlock()
+	fake.gitRepoClientForAccountNameMutex.RLock()
+	defer fake.gitRepoClientForAccountNameMutex.RUnlock()
 	fake.hTTPClientForAccountNameMutex.RLock()
 	defer fake.hTTPClientForAccountNameMutex.RUnlock()
 	fake.helmClientForAccountNameMutex.RLock()
