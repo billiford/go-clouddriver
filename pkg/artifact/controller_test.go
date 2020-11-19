@@ -194,7 +194,7 @@ var _ = Describe("Controller", func() {
 
 		When("it succeeds", func() {
 			It("succeeds", func() {
-				Expect(artifactCredentials).To(HaveLen(11))
+				Expect(artifactCredentials).To(HaveLen(12))
 				for _, ac := range artifactCredentials {
 					Expect(ac.Repository).To(BeEmpty())
 					Expect(ac.Token).To(BeEmpty())
@@ -270,6 +270,52 @@ var _ = Describe("Controller", func() {
 			It("succeeds", func() {
 				Expect(err).To(BeNil())
 				Expect(gitClient).ToNot(BeNil())
+			})
+		})
+	})
+
+	Describe("#GitRepoClientForAccountName", func() {
+		var (
+			gitRepoClient *http.Client
+			accountName   string
+		)
+
+		BeforeEach(func() {
+			accountName = "github-spinnaker"
+			cc, err = NewCredentialsController(dir)
+			Expect(err).To(BeNil())
+		})
+
+		JustBeforeEach(func() {
+			gitRepoClient, err = cc.GitRepoClientForAccountName(accountName)
+		})
+
+		When("the account name does not exist in the cache", func() {
+			BeforeEach(func() {
+				accountName = "fake"
+			})
+
+			It("returns an error", func() {
+				Expect(err).ToNot(BeNil())
+				Expect(err.Error()).To(Equal("git/repo account fake not found"))
+			})
+		})
+
+		When("the account requires token authorization", func() {
+			BeforeEach(func() {
+				accountName = "ghe-spinnaker"
+			})
+
+			It("succeeds", func() {
+				Expect(err).To(BeNil())
+				Expect(gitRepoClient).ToNot(BeNil())
+			})
+		})
+
+		When("it succeeds", func() {
+			It("succeeds", func() {
+				Expect(err).To(BeNil())
+				Expect(gitRepoClient).ToNot(BeNil())
 			})
 		})
 	})

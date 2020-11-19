@@ -39,6 +39,7 @@ type CredentialsController interface {
 	ListArtifactCredentialsNamesAndTypes() []Credentials
 	HelmClientForAccountName(string) (helm.Client, error)
 	GitClientForAccountName(string) (*github.Client, error)
+	GitRepoClientForAccountName(string) (*http.Client, error)
 	HTTPClientForAccountName(string) (*http.Client, error)
 }
 
@@ -67,6 +68,7 @@ func NewCredentialsController(dir string) (CredentialsController, error) {
 		artifactCredentials: []Credentials{},
 		helmClients:         map[string]helm.Client{},
 		gitClients:          map[string]*github.Client{},
+		gitRepoClients:      map[string]*http.Client{},
 		httpClients:         map[string]*http.Client{},
 	}
 
@@ -151,6 +153,20 @@ func NewCredentialsController(dir string) (CredentialsController, error) {
 						gitClient := github.NewClient(tc)
 						cc.gitClients[ac.Name] = gitClient
 					}
+				case TypeGitRepo:
+					var tc *http.Client
+
+					if ac.Token != "" {
+						ctx := context.Background()
+						ts := oauth2.StaticTokenSource(
+							&oauth2.Token{AccessToken: ac.Token},
+						)
+						tc = oauth2.NewClient(ctx, ts)
+					} else {
+						tc = http.DefaultClient
+					}
+
+					cc.gitRepoClients[ac.Name] = tc
 				}
 			}
 
@@ -166,6 +182,7 @@ type credentialsController struct {
 	httpClients         map[string]*http.Client
 	helmClients         map[string]helm.Client
 	gitClients          map[string]*github.Client
+	gitRepoClients      map[string]*http.Client
 }
 
 // There might be confidential info stored in a artifacts credentials, so we need to be careful
@@ -198,6 +215,14 @@ func (cc *credentialsController) GitClientForAccountName(accountName string) (*g
 	}
 
 	return cc.gitClients[accountName], nil
+}
+
+func (cc *credentialsController) GitRepoClientForAccountName(accountName string) (*http.Client, error) {
+	if _, ok := cc.gitRepoClients[accountName]; !ok {
+		return nil, fmt.Errorf("git/repo account %s not found", accountName)
+	}
+
+	return cc.gitRepoClients[accountName], nil
 }
 
 func (cc *credentialsController) HTTPClientForAccountName(accountName string) (*http.Client, error) {
