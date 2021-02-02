@@ -2,7 +2,7 @@
 
 # go-clouddriver
 
-#### Production of this repo has moved to https://github.com/homedepot/go-clouddriver
+#### Development of this repo has moved to https://github.com/homedepot/go-clouddriver
 
 go-clouddriver is a rewrite of Spinnaker's [Clouddriver](https://github.com/spinnaker/clouddriver) microservice. It aims to fix severe scaling problems and operational concerns when using Clouddriver at production scale.
 
