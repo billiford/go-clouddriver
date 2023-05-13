@@ -1,0 +1,46 @@
+[
+  {
+    "kind":       "ReplicaSet",
+    "apiVersion": "apps/v1",
+    "metadata": {
+      "name":              "test-rs1",
+      "namespace":         "test-namespace1",
+      "creationTimestamp": "2020-02-13T14:12:03Z",
+      "annotations": {
+        "artifact.spinnaker.io/name":       "test-deployment1",
+        "artifact.spinnaker.io/type":       "kubernetes/deployment",
+        "artifact.spinnaker.io/location":   "test-namespace1",
+        "moniker.spinnaker.io/application": "test-application",
+        "moniker.spinnaker.io/cluster":     "deployment test-deployment1",
+        "moniker.spinnaker.io/sequence":    "19"
+      },
+      "ownerReferences": [
+        {
+          "name": "test-deployment1",
+          "kind": "Deployment",
+          "uid":  "test-uid3"
+        }
+      ],
+      "uid": "test-uid1"
+    },
+    "spec": {
+      "replicas": 1,
+      "template": {
+        "spec": {
+          "containers": [
+            {
+              "image": "test-image1"
+            },
+            {
+              "image": "test-image2"
+            }
+          ]
+        }
+      }
+    },
+    "status": {
+      "replicas":      1,
+      "readyReplicas": 0
+    }
+  }
+]

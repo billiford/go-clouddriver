@@ -927,6 +927,9 @@ func (cc *Controller) ListServerGroups(c *gin.Context) {
 
 		return
 	}
+
+	start := time.Now()
+
 	// List all request resources for the given application.
 	rs, err := cc.listApplicationResources(c, serverGroupResources, accounts, []string{application})
 	if err != nil {
@@ -935,6 +938,10 @@ func (cc *Controller) ListServerGroups(c *gin.Context) {
 		return
 	}
 
+	fmt.Println()
+	fmt.Printf("listing app resources took %s\n", time.Since(start))
+	s2 := time.Now()
+
 	// Declare slices to hold resources.
 	pods := filterResourcesByKind(rs, "pod")
 	replicaSets := filterResourcesByKind(rs, "replicaSet")
@@ -942,6 +949,14 @@ func (cc *Controller) ListServerGroups(c *gin.Context) {
 	statefulSets := filterResourcesByKind(rs, "statefulSet")
 	services := filterResourcesByKind(rs, "service")
 
+	fmt.Printf("filtering took %s\n", time.Since(s2))
+	fmt.Println("length of pods", len(pods))
+	fmt.Println("length of rs", len(replicaSets))
+	fmt.Println("length of ds", len(daemonSets))
+	fmt.Println("length of sts", len(statefulSets))
+	fmt.Println("length of services", len(services))
+
+	s2 = time.Now()
 	// Make a map of a Pod's owner reference to the list of pods
 	// it owns.
 	serverGroupMap := makeServerGroupMap(pods)
@@ -956,12 +971,17 @@ func (cc *Controller) ListServerGroups(c *gin.Context) {
 	serverGroups = append(serverGroups, daemonSets...)
 	serverGroups = append(serverGroups, statefulSets...)
 
+	fmt.Printf("making server groups took %s\n", time.Since(s2))
+
+	s2 = time.Now()
 	// Create a new server group for each of these resources.
 	for _, sg := range serverGroups {
+		// s3 := time.Now()
 		_sg := newServerGroup(sg.u, serverGroupMap, sg.account)
 		if _, ok := serverGroupLoadBalancers[string(sg.u.GetUID())]; ok {
 			_sg.LoadBalancers = serverGroupLoadBalancers[string(sg.u.GetUID())]
 		}
+		// fmt.Println("time just to create new sg:", time.Since(s3))
 
 		managedLoadBalancers, err := kubernetes.LoadBalancers(sg.u)
 		if err == nil {
@@ -986,6 +1006,10 @@ func (cc *Controller) ListServerGroups(c *gin.Context) {
 
 		response = append(response, _sg)
 	}
+
+	fmt.Printf("ranging server groups took %s\n", time.Since(s2))
+
+	s2 = time.Now()
 	// Sort by account (cluster), then namespace, then kind, then name.
 	sort.Slice(response, func(i, j int) bool {
 		if response[i].Account != response[j].Account {
@@ -1002,9 +1026,101 @@ func (cc *Controller) ListServerGroups(c *gin.Context) {
 
 		return response[i].Name < response[j].Name
 	})
+	fmt.Printf("sorting took %s\n", time.Since(s2))
 
-	c.JSON(http.StatusOK, response)
+	// c.JSON(http.StatusOK, response)
 }
+
+// ListServerGroups returns a list of Kubernetes kinds ReplicaSets, DaemonSets,
+// StatefulSets and their associated Pods.
+// func (cc *Controller) ListServerGroups(c *gin.Context) {
+// 	response := ServerGroups{}
+// 	application := c.Param("application")
+// 	// List all accounts associated with the given Spinnaker app.
+// 	accounts, err := cc.SQLClient.ListKubernetesAccountsBySpinnakerApp(application)
+// 	if err != nil {
+// 		clouddriver.Error(c, http.StatusInternalServerError, err)
+//
+// 		return
+// 	}
+// 	// List all request resources for the given application.
+// 	rs, err := cc.listApplicationResources(c, serverGroupResources, accounts, []string{application})
+// 	if err != nil {
+// 		clouddriver.Error(c, http.StatusInternalServerError, err)
+//
+// 		return
+// 	}
+//
+// 	// Declare slices to hold resources.
+// 	pods := filterResourcesByKind(rs, "pod")
+// 	replicaSets := filterResourcesByKind(rs, "replicaSet")
+// 	daemonSets := filterResourcesByKind(rs, "daemonSet")
+// 	statefulSets := filterResourcesByKind(rs, "statefulSet")
+// 	services := filterResourcesByKind(rs, "service")
+//
+// 	// Make a map of a Pod's owner reference to the list of pods
+// 	// it owns.
+// 	serverGroupMap := makeServerGroupMap(pods)
+// 	// Make a map of ReplicaSet/StatefulSet UIDs to Services that front them.
+// 	frontableServerGroups := []resource{}
+// 	frontableServerGroups = append(frontableServerGroups, replicaSets...)
+// 	frontableServerGroups = append(frontableServerGroups, statefulSets...)
+// 	serverGroupLoadBalancers := makeServerGroupLoadBalancersMap(frontableServerGroups, services)
+// 	// Combine the resources into one server group slice.
+// 	serverGroups := []resource{}
+// 	serverGroups = append(serverGroups, replicaSets...)
+// 	serverGroups = append(serverGroups, daemonSets...)
+// 	serverGroups = append(serverGroups, statefulSets...)
+//
+// 	// Create a new server group for each of these resources.
+// 	for _, sg := range serverGroups {
+// 		_sg := newServerGroup(sg.u, serverGroupMap, sg.account)
+// 		if _, ok := serverGroupLoadBalancers[string(sg.u.GetUID())]; ok {
+// 			_sg.LoadBalancers = serverGroupLoadBalancers[string(sg.u.GetUID())]
+// 		}
+//
+// 		managedLoadBalancers, err := kubernetes.LoadBalancers(sg.u)
+// 		if err == nil {
+// 			for _, managedLoadBalancer := range managedLoadBalancers {
+// 				a := strings.Split(managedLoadBalancer, " ")
+// 				if len(a) != 2 {
+// 					continue
+// 				}
+//
+// 				// For now, limit the kind of load balancer available to attach to Services.
+// 				kind := a[0]
+// 				if !strings.EqualFold(kind, "service") {
+// 					continue
+// 				}
+//
+// 				if !containsIgnoreCase(_sg.LoadBalancers, managedLoadBalancer) {
+// 					_sg.LoadBalancers = append(_sg.LoadBalancers, managedLoadBalancer)
+// 					_sg.IsDisabled = true
+// 				}
+// 			}
+// 		}
+//
+// 		response = append(response, _sg)
+// 	}
+// 	// Sort by account (cluster), then namespace, then kind, then name.
+// 	sort.Slice(response, func(i, j int) bool {
+// 		if response[i].Account != response[j].Account {
+// 			return response[i].Account < response[j].Account
+// 		}
+//
+// 		if response[i].Namespace != response[j].Namespace {
+// 			return response[i].Namespace < response[j].Namespace
+// 		}
+//
+// 		if response[i].Kind != response[j].Kind {
+// 			return response[i].Kind < response[j].Kind
+// 		}
+//
+// 		return response[i].Name < response[j].Name
+// 	})
+//
+// 	c.JSON(http.StatusOK, response)
+// }
 
 // makeServerGroupLoadBalancersMap returns a map of resource UIDs to a slice
 // of Service names that front the reource.

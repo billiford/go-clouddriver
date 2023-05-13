@@ -1,0 +1,25 @@
+[
+  {
+    "kind":       "Pod",
+    "apiVersion": "v1",
+    "metadata": {
+      "name":              "test-pod3",
+      "namespace":         "test-namespace1",
+      "creationTimestamp": "2020-02-13T14:12:03Z",
+      "annotations": {
+        "moniker.spinnaker.io/application": "test-application"
+      },
+      "labels": {
+        "label1": "test-label1"
+      },
+      "ownerReferences": [
+        {
+          "name": "test-rs1",
+          "kind": "replicaSet",
+          "uid":  "test-uid1"
+        }
+      ],
+      "uid": "cec15437-4e6a-11ea-9788-4201ac100000"
+    }
+  }
+]

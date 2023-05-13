@@ -2,9 +2,11 @@ package core_test
 
 import (
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/homedepot/go-clouddriver/internal/kubernetes"
 	. "github.com/onsi/ginkgo"
@@ -3160,6 +3162,394 @@ var _ = Describe("Application", func() {
 			It("returns a sorted list of resources", func() {
 				Expect(res.StatusCode).To(Equal(http.StatusOK))
 				validateResponse(payloadListServerGroupsSorted)
+			})
+		})
+
+		FWhen("it is stresstested", func() {
+			BeforeEach(func() {
+				var pods, rs, ds, sts, svcs []unstructured.Unstructured
+				for _, kind := range []string{"Pod", "ReplicaSet", "DaemonSet", "StatefulSet", "Service"} {
+					for i := 0; i < 10000; i++ {
+						o := map[string]interface{}{
+							"kind":       kind,
+							"apiVersion": "v1",
+							"metadata": map[string]interface{}{
+								"name":              fmt.Sprintf("test-%s-%d", strings.ToLower(kind), i),
+								"namespace":         fmt.Sprintf("test-namespace-%s-%d", strings.ToLower(kind), i),
+								"creationTimestamp": "2020-02-13T14:12:03Z",
+								"annotations": map[string]interface{}{
+									"artifact.spinnaker.io/name":        "test-deployment1",
+									"artifact.spinnaker.io/type":        "kubernetes/deployment",
+									"artifact.spinnaker.io/location":    "test-namespace1",
+									"moniker.spinnaker.io/application":  "wrong-application",
+									"moniker.spinnaker.io/cluster":      "deployment test-deployment1",
+									"deployment.kubernetes.io/revision": "19",
+								},
+								"uid": "test-uid2",
+							},
+							"spec": map[string]interface{}{
+								"replicas": 1,
+								"template": map[string]interface{}{
+									"spec": map[string]interface{}{
+										"containers": []map[string]interface{}{
+											{
+												"image": "test-image1",
+											},
+											{
+												"image": "test-image2",
+											},
+										},
+									},
+								},
+							},
+							"status": map[string]interface{}{
+								"desiredNumberScheduled": 2,
+								"currentNumberScheduled": 1,
+								"numberReady":            1,
+							},
+						}
+
+						switch strings.ToLower(kind) {
+						case "pod":
+							pods = append(pods, unstructed.Unstructured{Object: o})
+						case "replicaset":
+							rs = append(rs, unstructed.Unstructured{Object: o})
+						case "daemonset":
+							ds = append(ds, unstructed.Unstructured{Object: o})
+						case "statefulset":
+							sts = append(sts, unstructed.Unstructured{Object: o})
+						case "service":
+							svcs = append(svcs, unstructed.Unstructured{Object: o})
+						}
+					}
+				}
+
+				fakeKubeClient.ListResourceWithContextReturnsOnCall(0, &unstructured.UnstructuredList{
+					Items: pods,
+				}, nil)
+				fakeKubeClient.ListResourceWithContextReturnsOnCall(1, &unstructured.UnstructuredList{
+					Items: rs,
+				}, nil)
+				fakeKubeClient.ListResourceWithContextReturnsOnCall(2, &unstructured.UnstructuredList{
+					Items: ds,
+				}, nil)
+				fakeKubeClient.ListResourceWithContextReturnsOnCall(3, &unstructured.UnstructuredList{
+					Items: sts,
+				}, nil)
+				fakeKubeClient.ListResourceWithContextReturnsOnCall(4, &unstructured.UnstructuredList{
+					Items: svcs,
+				}, nil)
+				// b, err := ioutil.ReadFile("test/response-pods.json")
+				// Expect(err).To(BeNil())
+				// pods := []unstructured.Unstructured{}
+				// err = json.Unmarshal(b, &pods)
+				// Expect(err).To(BeNil())
+				// fakeKubeClient.ListResourceWithContextReturnsOnCall(0, &unstructured.UnstructuredList{
+				// 	Items: pods,
+				// }, nil)
+				//
+				// b, err = ioutil.ReadFile("test/response-replicasets.json")
+				// Expect(err).To(BeNil())
+				// replicaSets := []unstructured.Unstructured{}
+				// err = json.Unmarshal(b, &replicaSets)
+				// Expect(err).To(BeNil())
+				// fakeKubeClient.ListResourceWithContextReturnsOnCall(1, &unstructured.UnstructuredList{
+				// 	Items: replicaSets,
+				// }, nil)
+				//
+				// b, err = ioutil.ReadFile("test/response-daemonsets.json")
+				// Expect(err).To(BeNil())
+				// daemonSets := []unstructured.Unstructured{}
+				// err = json.Unmarshal(b, &daemonSets)
+				// Expect(err).To(BeNil())
+				// fakeKubeClient.ListResourceWithContextReturnsOnCall(2, &unstructured.UnstructuredList{
+				// 	Items: daemonSets,
+				// }, nil)
+				//
+				// b, err = ioutil.ReadFile("test/response-statefulsets.json")
+				// Expect(err).To(BeNil())
+				// sts := []unstructured.Unstructured{}
+				// err = json.Unmarshal(b, &sts)
+				// Expect(err).To(BeNil())
+				// fakeKubeClient.ListResourceWithContextReturnsOnCall(3, &unstructured.UnstructuredList{
+				// 	Items: sts,
+				// }, nil)
+				//
+				// b, err = ioutil.ReadFile("test/response-services.json")
+				// Expect(err).To(BeNil())
+				// svcs := []unstructured.Unstructured{}
+				// err = json.Unmarshal(b, &svcs)
+				// Expect(err).To(BeNil())
+				// fakeKubeClient.ListResourceWithContextReturnsOnCall(4, &unstructured.UnstructuredList{
+				// 	Items: svcs,
+				// }, nil)
+				// fakeKubeClient.ListResourceWithContextReturnsOnCall(2, &unstructured.UnstructuredList{
+				// 	Items: []unstructured.Unstructured{
+				// 		{
+				// 			Object: map[string]interface{}{
+				// 				"kind":       "DaemonSet",
+				// 				"apiVersion": "v1",
+				// 				"metadata": map[string]interface{}{
+				// 					"name":              "test-ds1",
+				// 					"namespace":         "test-namespace2",
+				// 					"creationTimestamp": "2020-02-13T14:12:03Z",
+				// 					"annotations": map[string]interface{}{
+				// 						"artifact.spinnaker.io/name":        "test-deployment1",
+				// 						"artifact.spinnaker.io/type":        "kubernetes/deployment",
+				// 						"artifact.spinnaker.io/location":    "test-namespace1",
+				// 						"moniker.spinnaker.io/application":  "wrong-application",
+				// 						"moniker.spinnaker.io/cluster":      "deployment test-deployment1",
+				// 						"deployment.kubernetes.io/revision": "19",
+				// 					},
+				// 					"uid": "test-uid2",
+				// 				},
+				// 				"spec": map[string]interface{}{
+				// 					"replicas": 1,
+				// 					"template": map[string]interface{}{
+				// 						"spec": map[string]interface{}{
+				// 							"containers": []map[string]interface{}{
+				// 								{
+				// 									"image": "test-image1",
+				// 								},
+				// 								{
+				// 									"image": "test-image2",
+				// 								},
+				// 							},
+				// 						},
+				// 					},
+				// 				},
+				// 				"status": map[string]interface{}{
+				// 					"desiredNumberScheduled": 2,
+				// 					"currentNumberScheduled": 1,
+				// 					"numberReady":            1,
+				// 				},
+				// 			},
+				// 		},
+				// 		{
+				// 			Object: map[string]interface{}{
+				// 				"kind":       "DaemonSet",
+				// 				"apiVersion": "v1",
+				// 				"metadata": map[string]interface{}{
+				// 					"name":              "test-ds1",
+				// 					"namespace":         "test-namespace2",
+				// 					"creationTimestamp": "2020-02-13T14:12:03Z",
+				// 					"annotations": map[string]interface{}{
+				// 						"artifact.spinnaker.io/name":        "test-deployment1",
+				// 						"artifact.spinnaker.io/type":        "kubernetes/deployment",
+				// 						"artifact.spinnaker.io/location":    "test-namespace1",
+				// 						"moniker.spinnaker.io/application":  "test-application",
+				// 						"moniker.spinnaker.io/cluster":      "deployment test-deployment1",
+				// 						"deployment.kubernetes.io/revision": "19",
+				// 					},
+				// 					"uid": "test-uid2",
+				// 				},
+				// 				"spec": map[string]interface{}{
+				// 					"replicas": 1,
+				// 					"template": map[string]interface{}{
+				// 						"spec": map[string]interface{}{
+				// 							"containers": []map[string]interface{}{
+				// 								{
+				// 									"image": "test-image1",
+				// 								},
+				// 								{
+				// 									"image": "test-image2",
+				// 								},
+				// 							},
+				// 						},
+				// 					},
+				// 				},
+				// 				"status": map[string]interface{}{
+				// 					"desiredNumberScheduled": 2,
+				// 					"currentNumberScheduled": 1,
+				// 					"numberReady":            1,
+				// 				},
+				// 			},
+				// 		},
+				// 		{
+				// 			Object: map[string]interface{}{
+				// 				"kind":       "DaemonSet",
+				// 				"apiVersion": "v1",
+				// 				"metadata": map[string]interface{}{
+				// 					"name":              "test-ds1",
+				// 					"namespace":         "test-namespace1",
+				// 					"creationTimestamp": "2020-02-13T14:12:03Z",
+				// 					"annotations": map[string]interface{}{
+				// 						"artifact.spinnaker.io/name":        "test-deployment1",
+				// 						"artifact.spinnaker.io/type":        "kubernetes/deployment",
+				// 						"artifact.spinnaker.io/location":    "test-namespace1",
+				// 						"moniker.spinnaker.io/application":  "test-application",
+				// 						"moniker.spinnaker.io/cluster":      "deployment test-deployment1",
+				// 						"deployment.kubernetes.io/revision": "19",
+				// 					},
+				// 					"uid": "test-uid2",
+				// 				},
+				// 				"spec": map[string]interface{}{
+				// 					"replicas": 1,
+				// 					"template": map[string]interface{}{
+				// 						"spec": map[string]interface{}{
+				// 							"containers": []map[string]interface{}{
+				// 								{
+				// 									"image": "test-image1",
+				// 								},
+				// 								{
+				// 									"image": "test-image2",
+				// 								},
+				// 							},
+				// 						},
+				// 					},
+				// 				},
+				// 				"status": map[string]interface{}{
+				// 					"desiredNumberScheduled": 2,
+				// 					"currentNumberScheduled": 1,
+				// 					"numberReady":            1,
+				// 				},
+				// 			},
+				// 		},
+				// 	},
+				// }, nil)
+				// fakeKubeClient.ListResourceWithContextReturnsOnCall(3, &unstructured.UnstructuredList{
+				// 	Items: []unstructured.Unstructured{
+				// 		{
+				// 			Object: map[string]interface{}{
+				// 				"kind":       "StatefulSet",
+				// 				"apiVersion": "apps/v1",
+				// 				"metadata": map[string]interface{}{
+				// 					"name":              "test-rs1",
+				// 					"namespace":         "test-namespace1",
+				// 					"creationTimestamp": "2020-02-13T14:12:03Z",
+				// 					"annotations": map[string]interface{}{
+				// 						"artifact.spinnaker.io/name":        "test-deployment1",
+				// 						"artifact.spinnaker.io/type":        "kubernetes/deployment",
+				// 						"artifact.spinnaker.io/location":    "test-namespace1",
+				// 						"moniker.spinnaker.io/application":  "wrong-application",
+				// 						"moniker.spinnaker.io/cluster":      "deployment test-deployment1",
+				// 						"deployment.kubernetes.io/revision": "19",
+				// 					},
+				// 					"uid": "test-uid3",
+				// 				},
+				// 				"spec": map[string]interface{}{
+				// 					"replicas": 1,
+				// 					"template": map[string]interface{}{
+				// 						"spec": map[string]interface{}{
+				// 							"containers": []map[string]interface{}{
+				// 								{
+				// 									"image": "test-image1",
+				// 								},
+				// 								{
+				// 									"image": "test-image2",
+				// 								},
+				// 							},
+				// 						},
+				// 					},
+				// 				},
+				// 				"status": map[string]interface{}{
+				// 					"replicas":      1,
+				// 					"readyReplicas": 0,
+				// 				},
+				// 			},
+				// 		},
+				// 		{
+				// 			Object: map[string]interface{}{
+				// 				"kind":       "StatefulSet",
+				// 				"apiVersion": "apps/v1",
+				// 				"metadata": map[string]interface{}{
+				// 					"name":              "test-rs1",
+				// 					"namespace":         "test-namespace1",
+				// 					"creationTimestamp": "2020-02-13T14:12:03Z",
+				// 					"annotations": map[string]interface{}{
+				// 						"artifact.spinnaker.io/name":        "test-deployment1",
+				// 						"artifact.spinnaker.io/type":        "kubernetes/deployment",
+				// 						"artifact.spinnaker.io/location":    "test-namespace1",
+				// 						"moniker.spinnaker.io/application":  "test-application",
+				// 						"moniker.spinnaker.io/cluster":      "deployment test-deployment1",
+				// 						"deployment.kubernetes.io/revision": "19",
+				// 					},
+				// 					"uid": "test-uid3",
+				// 				},
+				// 				"spec": map[string]interface{}{
+				// 					"replicas": 1,
+				// 					"template": map[string]interface{}{
+				// 						"spec": map[string]interface{}{
+				// 							"containers": []map[string]interface{}{
+				// 								{
+				// 									"image": "test-image1",
+				// 								},
+				// 								{
+				// 									"image": "test-image2",
+				// 								},
+				// 							},
+				// 						},
+				// 					},
+				// 				},
+				// 				"status": map[string]interface{}{
+				// 					"replicas":      1,
+				// 					"readyReplicas": 0,
+				// 				},
+				// 			},
+				// 		},
+				// 		{
+				// 			Object: map[string]interface{}{
+				// 				"kind":       "StatefulSet",
+				// 				"apiVersion": "apps/v1",
+				// 				"metadata": map[string]interface{}{
+				// 					"name":              "test-rs1",
+				// 					"namespace":         "test-namespace2",
+				// 					"creationTimestamp": "2020-02-13T14:12:03Z",
+				// 					"annotations": map[string]interface{}{
+				// 						"artifact.spinnaker.io/name":        "test-deployment1",
+				// 						"artifact.spinnaker.io/type":        "kubernetes/deployment",
+				// 						"artifact.spinnaker.io/location":    "test-namespace1",
+				// 						"moniker.spinnaker.io/application":  "test-application",
+				// 						"moniker.spinnaker.io/cluster":      "deployment test-deployment1",
+				// 						"deployment.kubernetes.io/revision": "19",
+				// 					},
+				// 					"uid": "test-uid3",
+				// 				},
+				// 				"spec": map[string]interface{}{
+				// 					"replicas": 1,
+				// 					"template": map[string]interface{}{
+				// 						"spec": map[string]interface{}{
+				// 							"containers": []map[string]interface{}{
+				// 								{
+				// 									"image": "test-image1",
+				// 								},
+				// 								{
+				// 									"image": "test-image2",
+				// 								},
+				// 							},
+				// 						},
+				// 					},
+				// 				},
+				// 				"status": map[string]interface{}{
+				// 					"replicas":      1,
+				// 					"readyReplicas": 0,
+				// 				},
+				// 			},
+				// 		},
+				// 	},
+				// }, nil)
+			})
+
+			It("returns a sorted list of resources", func() {
+				Expect(res.StatusCode).To(Equal(http.StatusOK))
+			})
+		})
+
+		When("using a namespace-scoped provider", func() {
+			BeforeEach(func() {
+				namespace := "test-namespace"
+				fakeSQLClient.GetKubernetesProviderReturns(kubernetes.Provider{
+					Name:      "test-account",
+					Host:      "http://localhost",
+					CAData:    "",
+					Namespace: &namespace,
+				}, nil)
+			})
+
+			It("sets field selector in list options", func() {
+				_, _, lo := fakeKubeClient.ListResourceWithContextArgsForCall(0)
+				Expect(lo.FieldSelector).To(Equal("metadata.namespace=test-namespace"))
+				Expect(res.StatusCode).To(Equal(http.StatusOK))
 			})
 		})
 
